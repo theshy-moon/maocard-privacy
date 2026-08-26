@@ -3,1041 +3,924 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>插肩毛衣加针可视化 v0.1</title>
+  <title>插肩毛衣曲线设计器 v1.1</title>
   <style>
     * { box-sizing: border-box; }
+    :root {
+      --bg:#f5f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --blue:#2563eb;
+      --red:#dc2626; --orange:#ea580c; --purple:#7c3aed; --teal:#0891b2;
+    }
     body {
       margin: 0;
-      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
-      background: #f5f7fb;
-      color: #1f2937;
+      font-family: "Microsoft YaHei","PingFang SC",Arial,sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
-    .app {
-      display: flex;
-      min-height: 100vh;
-      gap: 16px;
-      padding: 16px;
-    }
+    .app { display:flex; gap:16px; padding:16px; min-height:100vh; }
     .panel {
-      width: 370px;
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      overflow: auto;
+      width:400px; flex:0 0 400px; background:var(--card); border-radius:15px; padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.07); overflow:auto;
     }
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+    .main { flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
+    .card { background:#fff; border-radius:15px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.07); }
+    .title-row { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    h1 { margin:0; font-size:22px; }
+    h2 { font-size:16px; margin:18px 0 10px; padding-bottom:6px; border-bottom:1px solid #e5e7eb; }
+    h3 { font-size:16px; margin:18px 0 8px; }
+    .muted { color:var(--muted); font-size:13px; line-height:1.65; }
+    .tip {
+      margin-top:10px; padding:10px 12px; border-radius:10px; background:#eff6ff; color:#1e3a8a;
+      font-size:13px; line-height:1.65;
     }
-    .card {
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    .mode-switch {
+      display:grid; grid-template-columns:1fr 1fr; gap:6px; background:#f3f4f6; padding:5px;
+      border-radius:12px; margin-top:12px;
     }
-    .title-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 8px;
+    .mode-switch button {
+      background:transparent; color:#4b5563; border:none; padding:9px 8px; border-radius:9px;
+      font-weight:700; cursor:pointer;
     }
-    h1 {
-      font-size: 22px;
-      margin: 0;
+    .mode-switch button.active { background:#fff; color:#111827; box-shadow:0 1px 5px rgba(0,0,0,.09); }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .field { display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
+    .field label { font-size:13px; font-weight:650; color:#374151; }
+    input, textarea {
+      width:100%; border:1px solid #d1d5db; border-radius:9px; padding:9px 10px; font-size:14px;
+      outline:none; background:#fff;
     }
-    h2 {
-      font-size: 16px;
-      margin: 18px 0 10px 0;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    h3 {
-      font-size: 16px;
-      margin: 20px 0 8px;
-    }
-    .muted {
-      color: #6b7280;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 10px;
-    }
-    .field label {
-      font-size: 13px;
-      color: #374151;
-      font-weight: 600;
-    }
-    .field input, .field textarea, .field select {
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 14px;
-      outline: none;
-      background: #fff;
-    }
-    .field input:focus, .field textarea:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
-    }
-    textarea {
-      min-height: 96px;
-      resize: vertical;
-      line-height: 1.5;
-    }
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
-    }
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      background: #2563eb;
-      color: white;
-    }
-    button:hover { filter: brightness(0.98); }
-    button.secondary {
-      background: #eef2ff;
-      color: #3730a3;
-    }
-    button.gray {
-      background: #f3f4f6;
-      color: #111827;
-    }
-    button.help-btn {
-      background: #111827;
-      color: white;
-      padding: 8px 12px;
-      white-space: nowrap;
-    }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(160px, 1fr));
-      gap: 10px;
-    }
-    .stat {
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 12px;
-    }
-    .stat .k {
-      color: #6b7280;
-      font-size: 12px;
-      margin-bottom: 6px;
-    }
-    .stat .v {
-      font-size: 20px;
-      font-weight: 800;
-      color: #111827;
-    }
+    input:focus, textarea:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.12); }
+    textarea { min-height:94px; resize:vertical; line-height:1.55; }
+    textarea[disabled], input[disabled] { background:#f3f4f6; color:#9ca3af; }
     .small-box {
-      background: #f9fafb;
-      border: 1px dashed #d1d5db;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 13px;
-      line-height: 1.7;
-      color: #374151;
+      border:1px dashed #cbd5e1; background:#f8fafc; border-radius:10px; padding:10px 12px;
+      font-size:13px; line-height:1.7;
     }
-    .quick-tip {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: #eff6ff;
-      color: #1e3a8a;
-      font-size: 13px;
-      line-height: 1.6;
+    .result-box {
+      margin-top:10px; border:1px solid #dbeafe; background:#f8fbff; border-radius:11px;
+      padding:11px 12px; font-size:13px; line-height:1.65;
     }
-    .checkline {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      color: #374151;
-      margin-bottom: 8px;
+    .result-box .rows {
+      margin-top:6px; padding:7px 8px; background:#fff; border:1px solid #e5e7eb; border-radius:7px;
+      max-height:92px; overflow:auto; word-break:break-all; font-family:Consolas,monospace; font-size:12px;
     }
-    .checkline input { transform: scale(1.15); }
+    .control-grid {
+      display:grid; grid-template-columns:70px 1fr 76px; gap:6px 8px; align-items:center;
+      margin-top:8px; font-size:12px;
+    }
+    .control-grid .head { color:#6b7280; font-weight:700; }
+    .control-grid input { padding:6px 7px; font-size:13px; }
+    .btn-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:9px; }
+    button.action {
+      border:none; border-radius:9px; padding:9px 12px; cursor:pointer; font-weight:700;
+      background:var(--blue); color:#fff;
+    }
+    button.secondary { background:#eef2ff; color:#3730a3; }
+    button.gray { background:#f3f4f6; color:#111827; }
+    button.help { background:#111827; color:#fff; padding:8px 11px; white-space:nowrap; }
+    .checkline { display:flex; align-items:center; gap:8px; font-size:13px; margin:8px 0; }
+    .checkline input { width:auto; transform:scale(1.12); }
+    .stats { display:grid; grid-template-columns:repeat(3,minmax(140px,1fr)); gap:10px; }
+    .stat { background:#f8fafc; border:1px solid #e5e7eb; border-radius:11px; padding:11px; }
+    .stat .k { color:#6b7280; font-size:12px; margin-bottom:5px; }
+    .stat .v { font-size:19px; font-weight:800; color:#111827; line-height:1.25; }
+    .legend { display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; font-size:12px; color:#4b5563; }
+    .legend span { display:inline-flex; align-items:center; gap:6px; }
+    .sw { width:17px; height:4px; border-radius:99px; display:inline-block; }
     #svgWrap {
-      width: 100%;
-      height: 760px;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid #e5e7eb;
+      border:1px solid #e5e7eb; border-radius:14px; overflow:hidden;
       background:
-        linear-gradient(to right, rgba(148,163,184,0.10) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(148,163,184,0.10) 1px, transparent 1px),
-        #fcfdff;
-      background-size: 32px 32px;
+        linear-gradient(to right,rgba(148,163,184,.10) 1px,transparent 1px),
+        linear-gradient(to bottom,rgba(148,163,184,.10) 1px,transparent 1px),#fcfdff;
+      background-size:32px 32px;
     }
-    svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-    .footer-note {
-      font-size: 12px;
-      color: #6b7280;
-      line-height: 1.6;
-      margin-top: 8px;
-    }
-    .error {
-      color: #b91c1c;
-      font-size: 13px;
-      font-weight: 600;
-      margin-top: 6px;
-      white-space: pre-wrap;
-    }
-    .legend {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-      font-size: 13px;
-      color: #374151;
-    }
-    .legend span {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .swatch {
-      width: 18px;
-      height: 4px;
-      border-radius: 999px;
-      display: inline-block;
+    #chart { display:block; width:100%; height:auto; aspect-ratio:1000/760; touch-action:pan-y; user-select:none; }
+    .error { color:#b91c1c; font-size:13px; font-weight:650; margin-top:8px; white-space:pre-wrap; }
+    .footer { color:#6b7280; font-size:12px; line-height:1.6; margin-top:9px; }
+    .drag-badge {
+      display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 9px;
+      font-size:12px; font-weight:700; background:#fff7ed; color:#9a3412;
     }
 
-    /* 使用说明弹窗 */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15,23,42,0.58);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 9999;
+    .modal-bg {
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:20px;
+      background:rgba(15,23,42,.58); z-index:9999;
     }
-    .modal-backdrop.open { display: flex; }
+    .modal-bg.open { display:flex; }
     .modal {
-      width: min(900px, 96vw);
-      max-height: 90vh;
-      overflow: hidden;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 24px 70px rgba(0,0,0,0.28);
-      display: flex;
-      flex-direction: column;
+      width:min(930px,96vw); max-height:90vh; overflow:hidden; background:#fff; border-radius:16px;
+      box-shadow:0 24px 70px rgba(0,0,0,.28); display:flex; flex-direction:column;
     }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 18px 20px;
-      border-bottom: 1px solid #e5e7eb;
+    .modal-head {
+      display:flex; align-items:center; justify-content:space-between; gap:12px; padding:17px 20px;
+      border-bottom:1px solid #e5e7eb;
     }
-    .modal-header h2 {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      font-size: 20px;
-    }
-    .close-btn {
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      border-radius: 999px;
-      background: #f3f4f6;
-      color: #111827;
-      font-size: 22px;
-      line-height: 1;
-    }
-    .modal-body {
-      padding: 20px;
-      overflow: auto;
-      line-height: 1.75;
-      color: #374151;
-    }
-    .modal-body p { margin: 8px 0; }
-    .modal-body ul, .modal-body ol { padding-left: 24px; }
-    .modal-body li { margin: 6px 0; }
-    .callout {
-      padding: 12px 14px;
-      border-radius: 10px;
-      background: #f8fafc;
-      border-left: 4px solid #2563eb;
-      margin: 12px 0;
-    }
-    .param-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 10px 0 18px;
-      font-size: 14px;
-    }
-    .param-table th, .param-table td {
-      border: 1px solid #e5e7eb;
-      padding: 9px 10px;
-      text-align: left;
-      vertical-align: top;
-    }
-    .param-table th {
-      background: #f8fafc;
-      color: #111827;
-    }
-    code {
-      background: #f3f4f6;
-      border-radius: 5px;
-      padding: 2px 5px;
-    }
+    .modal-head h2 { margin:0; padding:0; border:0; font-size:20px; }
+    .close { border:none; width:36px; height:36px; border-radius:50%; font-size:22px; background:#f3f4f6; cursor:pointer; }
+    .modal-body { padding:20px; overflow:auto; line-height:1.75; color:#374151; }
+    .modal-body ul,.modal-body ol { padding-left:24px; }
+    .modal-body li { margin:5px 0; }
+    .callout { padding:11px 13px; border-left:4px solid #2563eb; border-radius:8px; background:#f8fafc; margin:10px 0; }
     .example {
-      background: #0f172a;
-      color: #e2e8f0;
-      border-radius: 10px;
-      padding: 12px 14px;
-      white-space: pre-wrap;
-      font-family: Consolas, monospace;
-      line-height: 1.55;
+      background:#0f172a; color:#e2e8f0; border-radius:9px; padding:10px 12px;
+      white-space:pre-wrap; font-family:Consolas,monospace;
     }
-    @media (max-width: 1100px) {
-      .app { flex-direction: column; }
-      .panel { width: 100%; }
-      .stats { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-      #svgWrap { height: 620px; }
+    table.help-table { border-collapse:collapse; width:100%; font-size:14px; margin:10px 0 16px; }
+    .help-table th,.help-table td { border:1px solid #e5e7eb; padding:8px 9px; text-align:left; vertical-align:top; }
+    .help-table th { background:#f8fafc; }
+
+    @media(max-width:1100px){
+      .app{flex-direction:column;}
+      .panel{width:100%; flex-basis:auto;}
+      .stats{grid-template-columns:repeat(2,minmax(140px,1fr));}
+    }
+    @media(max-width:620px){
+      .app{padding:10px;}
+      .grid2{grid-template-columns:1fr;}
+      .stats{grid-template-columns:1fr 1fr;}
+      .control-grid{grid-template-columns:58px 1fr 70px;}
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="panel">
-      <div class="title-row">
-        <h1>插肩毛衣加针可视化 v0.1</h1>
-        <button class="help-btn" id="helpBtn">？ 使用说明</button>
-      </div>
+<div class="app">
+  <aside class="panel">
+    <div class="title-row">
+      <h1>插肩毛衣曲线设计器 v1.1</h1>
+      <button class="help" id="helpBtn">？ 使用说明</button>
+    </div>
+    <div class="muted">v1.1 修正了“引返”示意：它不再只在后片加高，而是会沿着两袖和前片两侧延伸，并在前片中间保留一段平段。</div>
 
-      <div class="muted">
-        重点观察 <b>四条对称插肩线</b> 与 <b>引返形成的后领落差弧度</b>。
-      </div>
+    <div class="mode-switch">
+      <button id="ruleModeBtn" class="active">规则输入</button>
+      <button id="dragModeBtn">拖拽设计</button>
+    </div>
 
-      <div class="quick-tip">
-        <b>第一次使用：</b>先不要改所有参数。直接点击下面的
-        “固定直线 / 先慢后快 / 先快后慢”三个示例，对比插肩线形状，再修改自己的数据。
-      </div>
+    <div class="tip" id="modeTip">当前是 <b>规则输入模式</b>：输入“每几行加一次”，程序计算插肩线。</div>
 
-      <h2>基础参数</h2>
-      <div class="grid2">
-        <div class="field">
-          <label>总起针数</label>
-          <input id="totalStitches" type="number" min="12" step="2" value="120">
-        </div>
-        <div class="field">
-          <label>插肩线针数（偶数）</label>
-          <input id="raglanWidth" type="number" min="2" step="2" value="2">
-        </div>
-        <div class="field">
-          <label>横密（每10cm几针）</label>
-          <input id="stitchGauge" type="number" min="1" step="0.1" value="24">
-        </div>
-        <div class="field">
-          <label>纵密（每10cm几行）</label>
-          <input id="rowGauge" type="number" min="1" step="0.1" value="32">
-        </div>
-        <div class="field">
-          <label>总行数</label>
-          <input id="totalRows" type="number" min="1" step="1" value="80">
-        </div>
-        <div class="field">
-          <label>领口宽度（cm，示意）</label>
-          <input id="neckWidth" type="number" min="1" step="0.1" value="16">
-        </div>
-        <div class="field">
-          <label>领口高度（cm，示意）</label>
-          <input id="neckHeight" type="number" min="1" step="0.1" value="6">
-        </div>
-        <div class="field">
-          <label>图形横向缩放</label>
-          <input id="curveScale" type="number" min="0.6" max="1.5" step="0.05" value="1.0">
-        </div>
-      </div>
+    <h2>基础参数</h2>
+    <div class="grid2">
+      <div class="field"><label>总起针数</label><input id="totalStitches" type="number" min="12" step="2" value="120"></div>
+      <div class="field"><label>插肩线针数（偶数）</label><input id="raglanWidth" type="number" min="2" step="2" value="2"></div>
+      <div class="field"><label>横密（10cm针数）</label><input id="stitchGauge" type="number" min="1" step="0.1" value="24"></div>
+      <div class="field"><label>纵密（10cm行数）</label><input id="rowGauge" type="number" min="1" step="0.1" value="32"></div>
+      <div class="field"><label>育克总行数</label><input id="totalRows" type="number" min="1" max="300" step="1" value="80"></div>
+      <div class="field"><label>图形横向缩放</label><input id="curveScale" type="number" min="0.6" max="1.5" step="0.05" value="1"></div>
+      <div class="field"><label>领口宽度（示意cm）</label><input id="neckWidth" type="number" min="1" step="0.1" value="16"></div>
+      <div class="field"><label>领口高度（示意cm）</label><input id="neckHeight" type="number" min="1" step="0.1" value="6"></div>
+    </div>
+    <div class="small-box" id="splitInfo"></div>
 
-      <div class="small-box" id="splitInfo"></div>
-
+    <section id="ruleSection">
       <h2>加针规则</h2>
       <div class="field">
         <label>格式：起始行-结束行:每n行加一次</label>
         <textarea id="rules">1-80:2</textarea>
       </div>
-      <div class="muted">
-        例：<code>1-80:2</code> 表示第1~80行，每2行出现一次“总共+8针”的加针行。
-      </div>
+      <div class="muted">例：<code>1-20:4</code>、<code>21-50:3</code>、<code>51-90:2</code>。</div>
+    </section>
 
-      <h2>引返 / 后领弧度</h2>
-      <div class="grid2">
-        <div class="field">
-          <label>引返最大额外行数</label>
-          <input id="shortRowsExtra" type="number" min="0" step="1" value="6">
-        </div>
-        <div class="field">
-          <label>引返作用宽度比例（0~1）</label>
-          <input id="shortRowsWidth" type="number" min="0" max="1" step="0.05" value="0.72">
-        </div>
+    <section id="dragSection" hidden>
+      <h2>拖拽曲线 → 反推加针</h2>
+      <div class="small-box">
+        图中橙色圆点就是控制点。<b>左右拖动四条红线上的任意同层圆点</b>，四条对称插肩线会一起改变。
+        程序会把连续曲线自动量化成真实可执行的“加针行”。
       </div>
-
-      <div class="checkline">
-        <input id="showPoints" type="checkbox" checked>
-        <label for="showPoints">显示加针行标记点</label>
+      <div class="control-grid" id="controlEditor"></div>
+      <div class="result-box">
+        <b>反推结果</b>
+        <div id="dragSummary"></div>
+        <div class="rows" id="increaseRowsText"></div>
       </div>
-      <div class="checkline">
-        <input id="showAllRows" type="checkbox">
-        <label for="showAllRows">显示每一行的淡色层线</label>
-      </div>
-
       <div class="btn-row">
-        <button id="drawBtn">生成 / 更新</button>
-        <button class="secondary" id="presetLinear">示例：固定直线</button>
-        <button class="secondary" id="presetCurve">示例：先慢后快</button>
-        <button class="gray" id="presetMixed">示例：先快后慢</button>
+        <button class="action secondary" id="straightPreset">直线</button>
+        <button class="action secondary" id="outwardPreset">柔和外弯</button>
+        <button class="action secondary" id="inwardPreset">柔和内弯</button>
+        <button class="action gray" id="irregularPreset">非规则弧线</button>
       </div>
+    </section>
 
-      <div class="error" id="errorBox"></div>
-
-      <div class="footer-note">
-        这是几何规律可视化工具，不是织物力学仿真。线材、针号、松紧和下水都会影响真实成衣。
-      </div>
+    <h2>引返 / 前后落差示意</h2>
+    <div class="grid2">
+      <div class="field"><label>引返最大额外行数</label><input id="shortRowsExtra" type="number" min="0" max="80" step="1" value="6"></div>
+      <div class="field"><label>引返包裹范围（0~1）</label><input id="shortRowsWidth" type="number" min="0.1" max="1" step="0.05" value="0.72"></div>
+      <div class="field"><label>前片中间平段比例（0~0.5）</label><input id="frontFlatRatio" type="number" min="0" max="0.5" step="0.05" value="0.25"></div>
+      <div class="field"><label>前片平段显示缩放</label><input id="frontFlatScale" type="number" min="0.6" max="1.6" step="0.05" value="1.0"></div>
+    </div>
+    <div class="muted">
+      蓝色环状示意表示：引返路径会经过四条加针线并延伸到前片两侧；前片最中间保留一小段平段。<br>
+      可拖拽：<b>蓝色上方圆点</b>改落差，<b>蓝色右上圆点</b>改包裹范围，<b>蓝色前片右端圆点</b>改前片平段比例。
     </div>
 
-    <div class="main">
-      <div class="card">
-        <div class="stats" id="stats"></div>
-        <div class="legend">
-          <span><i class="swatch" style="background:#dc2626;"></i> 插肩线</span>
-          <span><i class="swatch" style="background:#2563eb;"></i> 后领引返弧度</span>
-          <span><i class="swatch" style="background:#9ca3af;"></i> 领口示意</span>
-          <span><i class="swatch" style="background:#a78bfa;"></i> 加针行</span>
-        </div>
-      </div>
+    <div class="checkline"><input id="showPoints" type="checkbox" checked><label for="showPoints">显示加针行标记点</label></div>
+    <div class="checkline"><input id="showTarget" type="checkbox" checked><label for="showTarget">拖拽模式显示“目标曲线”虚线</label></div>
 
-      <div class="card" id="svgWrap">
-        <svg id="chart" viewBox="0 0 1000 760" xmlns="http://www.w3.org/2000/svg"></svg>
-      </div>
+    <div class="btn-row">
+      <button class="action" id="drawBtn">生成 / 更新</button>
+      <button class="action gray" id="resetBtn">恢复默认</button>
     </div>
-  </div>
 
-  <!-- 使用说明 -->
-  <div class="modal-backdrop" id="helpModal" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
-      <div class="modal-header">
-        <h2 id="helpTitle">使用说明</h2>
-        <button class="close-btn" id="closeHelpBtn" title="关闭">×</button>
+    <div class="error" id="errorBox"></div>
+    <div class="footer">
+      红线是“按实际加针行量化后的可织路径”；青色虚线是理想连续目标弧线；蓝色环状示意表示引返路径/前后落差的分布范围，不是逐针精确引返路线。
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="card">
+      <div class="stats" id="stats"></div>
+      <div class="legend">
+        <span><i class="sw" style="background:#dc2626"></i>实际可织插肩线</span>
+        <span><i class="sw" style="background:#0891b2"></i>拖拽目标曲线</span>
+        <span><i class="sw" style="background:#ea580c"></i>可拖控制点</span>
+        <span><i class="sw" style="background:#2563eb"></i>引返路径 / 前后落差示意</span>
+        <span><i class="sw" style="background:#7c3aed"></i>加针行</span>
       </div>
-      <div class="modal-body">
-        <div class="callout">
-          <b>最简单的使用方法：</b>
-          第一次打开时，不需要先理解所有参数。先点击“示例：固定直线”“示例：先慢后快”“示例：先快后慢”，观察红色插肩线怎么变化。
-        </div>
+    </section>
+    <section class="card" id="svgWrap">
+      <svg id="chart" viewBox="0 0 1000 760" xmlns="http://www.w3.org/2000/svg" aria-label="插肩毛衣曲线示意图"></svg>
+    </section>
+  </main>
+</div>
 
-        <h3>1. 这个工具主要看什么？</h3>
-        <p>
-          红色的四条线代表四条对称插肩线。蓝色弧线代表引返在后脖子处制造出的前后落差。
-          工具的核心是比较不同“加针频率”怎样改变插肩线的形状。
-        </p>
+<div class="modal-bg" id="helpModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal-head">
+      <h2 id="helpTitle">v1.1 使用说明</h2>
+      <button class="close" id="closeHelp">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="callout">
+        <b>v1.1 的主要修正：</b>
+        蓝色“引返”示意不再只在后片上方，而是会沿着两袖和前片两侧延伸，经过四条插肩线，并在前片最中间留出一段平段。
+      </div>
 
-        <h3>2. 加针规则怎么填写？</h3>
-        <p>格式固定为：</p>
-        <div class="example">起始行-结束行:每n行加一次</div>
-        <p>例如：</p>
-        <div class="example">1-80:2</div>
-        <p>
-          表示第1到80行中，每2行有1行加针；每个加针行在四条插肩线两侧加针，总共 +8 针。
-        </p>
+      <h3>一、推荐使用流程</h3>
+      <ol>
+        <li>先填总起针数、横密、纵密、育克总行数。</li>
+        <li>如果你已经有“每几行加一次”的方案，用 <b>规则输入模式</b>。</li>
+        <li>如果你想直接试好看的弧度，用 <b>拖拽设计模式</b>。</li>
+        <li>红线满意之后，再微调蓝色“引返 / 前后落差示意”。</li>
+      </ol>
 
-        <p>如果希望做弧形，可以分阶段，例如：</p>
-        <div class="example">1-20:4
+      <h3>二、拖拽模式怎么用？</h3>
+      <ul>
+        <li>橙色控制点：拖四条插肩线的弧度。</li>
+        <li>蓝色上方控制点：拖高/拖低，引返落差更大或更小。</li>
+        <li>蓝色右上控制点：向外拖则引返包裹范围更大，向内拖则范围更集中。</li>
+        <li>蓝色前片右端控制点：拖动可改变“前片中间平段比例”。</li>
+      </ul>
+
+      <h3>三、前片中间平段比例是什么？</h3>
+      <p>
+        它表示前脖子最中间那一段保留多少“平”的空间。值越大，蓝色路径在前片中央留下的平段越宽；
+        值越小，蓝色路径越接近一直绕到前中部。
+      </p>
+
+      <h3>四、引返包裹范围是什么？</h3>
+      <p>
+        它表示这段引返/落差影响的范围有多宽。值大时，会更明显地延伸到前片两侧和袖子方向；
+        值小时，主要集中在后片附近。
+      </p>
+
+      <h3>五、拖出来的红线和真实织法是什么关系？</h3>
+      <table class="help-table">
+        <tr><th>显示内容</th><th>含义</th></tr>
+        <tr><td>青色虚线</td><td>你拖出来的理想连续弧线。</td></tr>
+        <tr><td>红色实线</td><td>程序量化成真正“某些行 +8 针”之后的离散可织曲线。</td></tr>
+        <tr><td>紫色点</td><td>实际发生 +8 针的那些行。</td></tr>
+        <tr><td>蓝色环状示意</td><td>引返/前后落差的作用区域示意，不是逐次转身的精确针法图。</td></tr>
+      </table>
+
+      <h3>六、规则输入格式</h3>
+      <div class="example">1-20:4
 21-50:3
 51-90:2</div>
-        <p>
-          这表示前面每4行加一次，中间每3行加一次，后面每2行加一次。
-          因为越往下加针越频繁，所以红色插肩线会越来越向外展开。
-        </p>
+      <p>表示前 20 行每 4 行加一次，中间每 3 行加一次，后面每 2 行加一次。</p>
 
-        <p>反过来：</p>
-        <div class="example">1-24:2
-25-48:3
-49-80:4</div>
-        <p>
-          就是前面扩张快、后面扩张慢，曲线方向会相反。
-        </p>
-
-        <h3>3. 各参数是什么意思？</h3>
-        <table class="param-table">
-          <tr>
-            <th>参数</th>
-            <th>用途</th>
-            <th>不会用时怎么办</th>
-          </tr>
-          <tr>
-            <td>总起针数</td>
-            <td>领口开始时的总针数。</td>
-            <td>填自己实际起针数；只是比较弧度时也可保持默认120。</td>
-          </tr>
-          <tr>
-            <td>插肩线针数</td>
-            <td>四条插肩线本身的宽度，常见为2针或4针。</td>
-            <td>一般填2或4即可。它主要影响显示粗细。</td>
-          </tr>
-          <tr>
-            <td>横密</td>
-            <td>10cm里有多少针，用于把“针数”换算为实际横向厘米。</td>
-            <td>有密度样就填实测值；没有就先用默认24。</td>
-          </tr>
-          <tr>
-            <td>纵密</td>
-            <td>10cm里有多少行，用于把“行数”换算为实际纵向厘米。</td>
-            <td>有密度样就填实测值；没有就先用默认32。</td>
-          </tr>
-          <tr>
-            <td>总行数</td>
-            <td>模拟从领口向下织多少行。</td>
-            <td>填预计育克部分的行数。</td>
-          </tr>
-          <tr>
-            <td>领口宽/高</td>
-            <td>只是画图定位用的领口示意尺寸，目前不作为严格版型计算。</td>
-            <td>看着舒服即可，不确定时保持默认。</td>
-          </tr>
-          <tr>
-            <td>图形横向缩放</td>
-            <td>只改变画面显示比例，方便观察弧度。</td>
-            <td>通常保持1.0，不是织法参数。</td>
-          </tr>
-          <tr>
-            <td>引返最大额外行数</td>
-            <td>表示后领中央最多比前部多出的行数，用来近似落差高度。</td>
-            <td>数值越大，蓝色弧度越深。</td>
-          </tr>
-          <tr>
-            <td>引返作用宽度比例</td>
-            <td>表示引返弧度覆盖后领多宽的范围。</td>
-            <td>越接近1，作用范围越宽；越小则弧度集中在后脖子中央。</td>
-          </tr>
-        </table>
-
-        <h3>4. 怎么判断红线是直线还是弧线？</h3>
-        <ul>
-          <li><b>一直每2行加一次</b>：理论上近似直线。</li>
-          <li><b>一直每3行加一次</b>：仍然近似直线，只是倾斜程度不同。</li>
-          <li><b>加针间隔随着行数变化</b>：斜率发生变化，因此会形成弧线或分段弧线。</li>
-        </ul>
-
-        <h3>5. “固定直线 / 先慢后快 / 先快后慢”分别是什么？</h3>
-        <ul>
-          <li><b>固定直线：</b>整个育克都保持同一加针频率。</li>
-          <li><b>先慢后快：</b>越往下加针越密，插肩线越往外弯。</li>
-          <li><b>先快后慢：</b>前段展开快，后段逐渐变缓。</li>
-        </ul>
-
-        <h3>6. 蓝色的引返弧度怎么看？</h3>
-        <p>
-          当前版本先用几何近似表示引返，不要求输入每一次具体引返到第几针。
-          “最大额外行数”决定落差高度，“作用宽度比例”决定弧度覆盖范围。
-          后续版本可以升级成真实的“每次多织几针、在哪里转身”的逐次引返模型。
-        </p>
-
-        <h3>7. 推荐的实际使用流程</h3>
-        <ol>
-          <li>先输入自己的总起针数、横密、纵密和预计总行数。</li>
-          <li>先使用一个固定规则，例如 <code>1-80:2</code>，作为基准。</li>
-          <li>再改成分段规则，观察红线弧度。</li>
-          <li>用“先慢后快”和“先快后慢”快速判断自己想要哪种弯曲方向。</li>
-          <li>最后再微调引返参数，观察后领落差。</li>
-        </ol>
-
-        <div class="callout">
-          <b>注意：</b>
-          这个版本主要用于比较“规则变化带来的几何趋势”。真实毛衣还会受到线材弹性、针号、松紧、花样、下水和穿着拉伸等因素影响。
-        </div>
+      <div class="callout">
+        <b>注意：</b>
+        当前工具重点是“几何趋势可视化”。真实成衣还会受到线材、针号、松紧、花样和下水影响。
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const $ = (id) => document.getElementById(id);
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const svg = $("chart");
+  let mode = "rule";
+  let controlRows = [];
+  let controlGroups = [];
+  let activeDrag = null;
 
-    function getParams() {
-      return {
-        totalStitches: parseInt($("totalStitches").value, 10),
-        raglanWidth: parseInt($("raglanWidth").value, 10),
-        stitchGauge: parseFloat($("stitchGauge").value),
-        rowGauge: parseFloat($("rowGauge").value),
-        totalRows: parseInt($("totalRows").value, 10),
-        neckWidth: parseFloat($("neckWidth").value),
-        neckHeight: parseFloat($("neckHeight").value),
-        curveScale: parseFloat($("curveScale").value),
-        shortRowsExtra: parseInt($("shortRowsExtra").value, 10),
-        shortRowsWidth: parseFloat($("shortRowsWidth").value),
-        showPoints: $("showPoints").checked,
-        showAllRows: $("showAllRows").checked,
-        rulesText: $("rules").value.trim()
-      };
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+  function num(id,f=0){ const v=Number($(id).value); return Number.isFinite(v)?v:f; }
+
+  function getParams(){
+    return {
+      totalStitches: Math.max(12,Math.round(num("totalStitches",120))),
+      raglanWidth: Math.max(2,Math.round(num("raglanWidth",2))),
+      stitchGauge: Math.max(.1,num("stitchGauge",24)),
+      rowGauge: Math.max(.1,num("rowGauge",32)),
+      totalRows: clamp(Math.round(num("totalRows",80)),1,300),
+      curveScale: clamp(num("curveScale",1),.6,1.5),
+      neckWidth: Math.max(1,num("neckWidth",16)),
+      neckHeight: Math.max(1,num("neckHeight",6)),
+      shortRowsExtra: clamp(Math.round(num("shortRowsExtra",6)),0,80),
+      shortRowsWidth: clamp(num("shortRowsWidth",.72),0.1,1),
+      frontFlatRatio: clamp(num("frontFlatRatio",.25),0,0.5),
+      frontFlatScale: clamp(num("frontFlatScale",1),0.6,1.6),
+      showPoints: $("showPoints").checked,
+      showTarget: $("showTarget").checked
+    };
+  }
+
+  function initialSplit(total){
+    let front=Math.round(total/3), back=Math.round(total/3);
+    let remain=total-front-back;
+    let leftSleeve=Math.floor(remain/2), rightSleeve=remain-leftSleeve;
+    return {front,back,leftSleeve,rightSleeve};
+  }
+
+  function updateSplitInfo(){
+    const p=getParams(), s=initialSplit(p.totalStitches);
+    $("splitInfo").innerHTML = `<b>默认起始分配：</b><br>前片 ${s.front} 针　后片 ${s.back} 针<br>左袖 ${s.leftSleeve} 针　右袖 ${s.rightSleeve} 针`;
+  }
+
+  function parseRules(text){
+    const lines=text.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+    const rules=[], errors=[];
+    lines.forEach((line,i)=>{
+      const m=line.match(/^(\d+)\s*-\s*(\d+)\s*:\s*(\d+)$/);
+      if(!m){ errors.push(`第${i+1}行格式错误：${line}`); return; }
+      const start=+m[1], end=+m[2], every=+m[3];
+      if(start>end) errors.push(`第${i+1}行：起始行不能大于结束行`);
+      if(every<1) errors.push(`第${i+1}行：间隔必须≥1`);
+      rules.push({start,end,every,raw:line});
+    });
+    rules.sort((a,b)=>a.start-b.start);
+    for(let i=1;i<rules.length;i++){
+      if(rules[i].start<=rules[i-1].end) errors.push(`规则区间重叠：${rules[i-1].raw} 与 ${rules[i].raw}`);
+    }
+    return {rules,errors};
+  }
+
+  function isIncreaseRow(row,rules){
+    for(const r of rules){
+      if(row>=r.start && row<=r.end) return ((row-r.start)%r.every===0);
+    }
+    return false;
+  }
+
+  function scheduleFromRules(totalRows,rules){
+    const groups=new Array(totalRows+1).fill(0), incRows=[];
+    for(let r=1;r<=totalRows;r++){
+      groups[r]=groups[r-1];
+      if(isIncreaseRow(r,rules)){ groups[r]++; incRows.push(r); }
+    }
+    return {groups,incRows,target:groups.slice(),fitError:0};
+  }
+
+  function buildControlRows(totalRows){
+    const vals=[0,.2,.4,.6,.8,1].map(x=>Math.round(totalRows*x));
+    const uniq=[];
+    vals.forEach(v=>{ if(!uniq.includes(v)) uniq.push(v); });
+    if(uniq[uniq.length-1]!==totalRows) uniq.push(totalRows);
+    return uniq;
+  }
+
+  function interpMonotone(xs,ys,xq){
+    const n=xs.length;
+    if(n===1) return ys[0];
+    if(xq<=xs[0]) return ys[0];
+    if(xq>=xs[n-1]) return ys[n-1];
+
+    const d=new Array(n-1);
+    for(let i=0;i<n-1;i++){
+      const h=Math.max(1e-9,xs[i+1]-xs[i]);
+      d[i]=(ys[i+1]-ys[i])/h;
+    }
+    const m=new Array(n);
+    m[0]=d[0]; m[n-1]=d[n-2];
+    for(let i=1;i<n-1;i++){
+      if(d[i-1]*d[i]<=0) m[i]=0;
+      else{
+        const h0=xs[i]-xs[i-1], h1=xs[i+1]-xs[i];
+        const w1=2*h1+h0, w2=h1+2*h0;
+        m[i]=(w1+w2)/(w1/d[i-1]+w2/d[i]);
+      }
     }
 
-    function initialSplit(total) {
-      let front = Math.round(total / 3);
-      let back = Math.round(total / 3);
-      let remain = total - front - back;
-      let leftSleeve = Math.floor(remain / 2);
-      let rightSleeve = remain - leftSleeve;
-      return { front, back, leftSleeve, rightSleeve };
+    let k=0;
+    while(k<n-2 && xq>xs[k+1]) k++;
+    const h=xs[k+1]-xs[k], t=(xq-xs[k])/h;
+    const h00=2*t*t*t-3*t*t+1, h10=t*t*t-2*t*t+t, h01=-2*t*t*t+3*t*t, h11=t*t*t-t*t;
+    return h00*ys[k]+h10*h*m[k]+h01*ys[k+1]+h11*h*m[k+1];
+  }
+
+  function scheduleFromDrag(totalRows){
+    const target=new Array(totalRows+1).fill(0);
+    for(let r=0;r<=totalRows;r++) target[r]=Math.max(0,interpMonotone(controlRows,controlGroups,r));
+
+    const groups=new Array(totalRows+1).fill(0), incRows=[];
+    let maxErr=0;
+    for(let r=1;r<=totalRows;r++){
+      let desired=Math.round(target[r]);
+      desired=Math.max(groups[r-1],desired);
+      desired=Math.min(groups[r-1]+1,desired); // 每行最多一组+8
+      groups[r]=desired;
+      if(groups[r]>groups[r-1]) incRows.push(r);
+      maxErr=Math.max(maxErr,Math.abs(target[r]-groups[r]));
     }
+    return {groups,incRows,target,fitError:maxErr};
+  }
 
-    function updateSplitInfo() {
-      const total = parseInt($("totalStitches").value || "0", 10);
-      const s = initialSplit(total);
-      $("splitInfo").innerHTML =
-        `<b>默认起始分配：</b><br>
-         前片：${s.front} 针　后片：${s.back} 针　左袖：${s.leftSleeve} 针　右袖：${s.rightSleeve} 针`;
-    }
+  function ensureControlsFromCurrentRules(force=false){
+    const p=getParams();
+    const newRows=buildControlRows(p.totalRows);
+    if(!force && controlRows.length && controlRows[controlRows.length-1]===p.totalRows) return;
+    const {rules}=parseRules($("rules").value.trim());
+    const sched=scheduleFromRules(p.totalRows,rules);
+    controlRows=newRows;
+    controlGroups=controlRows.map(r=>sched.groups[r]||0);
+    controlGroups[0]=0;
+  }
 
-    function parseRules(text) {
-      const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
-      const rules = [];
-      const errors = [];
+  function setControlGroup(i,v){
+    const p=getParams();
+    v=clamp(Math.round(v),0,p.totalRows);
+    if(i===0) v=0;
+    controlGroups[i]=v;
+    for(let j=i+1;j<controlGroups.length;j++) if(controlGroups[j]<controlGroups[j-1]) controlGroups[j]=controlGroups[j-1];
+    for(let j=i-1;j>=0;j--) if(controlGroups[j]>controlGroups[j+1]) controlGroups[j]=controlGroups[j+1];
+    controlGroups[0]=0;
+  }
 
-      lines.forEach((line, idx) => {
-        const m = line.match(/^(\d+)\s*-\s*(\d+)\s*:\s*(\d+)$/);
-        if (!m) {
-          errors.push(`第 ${idx + 1} 行规则格式错误：${line}`);
-          return;
-        }
-        const start = parseInt(m[1], 10);
-        const end = parseInt(m[2], 10);
-        const every = parseInt(m[3], 10);
-        if (start > end) errors.push(`第 ${idx + 1} 行规则起始行不能大于结束行：${line}`);
-        if (every < 1) errors.push(`第 ${idx + 1} 行规则中的 n 必须 >= 1：${line}`);
-        rules.push({ start, end, every, raw: line });
+  function simulate(p,schedule){
+    const split=initialSplit(p.totalStitches);
+    const stitchW=10/p.stitchGauge, rowH=10/p.rowGauge;
+    const rows=[];
+    for(let r=0;r<=p.totalRows;r++){
+      const g=schedule.groups[r]||0;
+      const prev=r?schedule.groups[r-1]||0:0;
+      rows.push({
+        row:r, incCount:g, isIncRow:r>0 && g>prev,
+        front:split.front+2*g, back:split.back+2*g,
+        leftSleeve:split.leftSleeve+2*g, rightSleeve:split.rightSleeve+2*g,
+        total:p.totalStitches+8*g,
+        depthCm:r*rowH, shiftCm:g*stitchW, targetShiftCm:(schedule.target[r]||0)*stitchW
       });
+    }
+    return {split,stitchW,rowH,rows};
+  }
 
-      rules.sort((a, b) => a.start - b.start);
+  function shapeText(schedule){
+    if(schedule.incRows.length<2) return "加针较少，暂不判断";
+    const gaps=[];
+    for(let i=1;i<schedule.incRows.length;i++) gaps.push(schedule.incRows[i]-schedule.incRows[i-1]);
+    if(!gaps.length) return "单次加针";
+    const q=Math.max(1,Math.floor(gaps.length/3));
+    const early=gaps.slice(0,q).reduce((a,b)=>a+b,0)/q;
+    const late=gaps.slice(-q).reduce((a,b)=>a+b,0)/q;
+    if(Math.abs(early-late)<.35) return "整体接近直线";
+    if(late<early) return "越往下加针越密：外弯趋势";
+    return "越往下加针越疏：内弯趋势";
+  }
 
-      for (let i = 1; i < rules.length; i++) {
-        if (rules[i].start <= rules[i - 1].end) {
-          errors.push(`规则区间有重叠：${rules[i - 1].raw} 与 ${rules[i].raw}`);
-        }
-      }
+  function stat(k,v){ return `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
 
-      return { rules, errors };
+  function renderStats(sim,p,schedule){
+    const end=sim.rows[sim.rows.length-1];
+    const avg=schedule.incRows.length ? (p.totalRows/schedule.incRows.length).toFixed(2) : "—";
+    $("stats").innerHTML = [
+      stat("最终总针数", end.total),
+      stat("前片 / 后片", `${end.front} / ${end.back}`),
+      stat("左右袖", `${end.leftSleeve} / ${end.rightSleeve}`),
+      stat("育克深度", `${end.depthCm.toFixed(2)} cm`),
+      stat("平均加针间隔", schedule.incRows.length ? `${avg} 行` : "无加针"),
+      stat("插肩线趋势", shapeText(schedule))
+    ].join("");
+  }
+
+  function renderControlEditor(){
+    if(mode!=="drag") return;
+    const box=$("controlEditor");
+    let h=`<div class="head">控制点</div><div class="head">所在行</div><div class="head">累计+8组</div>`;
+    controlRows.forEach((r,i)=>{
+      h += `<div>${i===0?"起点":`点 ${i}`}</div><div>${r} 行</div>
+      <input class="ctrlInput" data-i="${i}" type="number" min="0" max="300" step="1" value="${Math.round(controlGroups[i]||0)}" ${i===0?"disabled":""}>`;
+    });
+    box.innerHTML=h;
+    box.querySelectorAll(".ctrlInput").forEach(el=>{
+      el.addEventListener("change", ()=>{
+        setControlGroup(+el.dataset.i, +el.value);
+        render();
+      });
+    });
+  }
+
+  function renderDragSummary(p,schedule){
+    if(mode!=="drag") return;
+    const avg=schedule.incRows.length ? (p.totalRows/schedule.incRows.length).toFixed(2) : "—";
+    $("dragSummary").innerHTML =
+      `<div>总加针组数：<b>${schedule.incRows.length}</b>（总增加 ${schedule.incRows.length*8} 针）</div>
+       <div>平均间隔：<b>${avg}</b> 行　｜　最大拟合误差：<b>${schedule.fitError.toFixed(2)}</b> 组</div>`;
+    $("increaseRowsText").textContent = schedule.incRows.length ? `加针行：${schedule.incRows.join(", ")}` : "当前没有加针行";
+  }
+
+  function el(name,attrs={}){
+    const n=document.createElementNS("http://www.w3.org/2000/svg",name);
+    Object.entries(attrs).forEach(([k,v])=>{ if(v!==undefined) n.setAttribute(k,v); });
+    return n;
+  }
+
+  function addText(x,y,text,opt={}){
+    const t=el("text",{
+      x,y,fill:opt.fill||"#374151","font-size":opt.size||13,
+      "font-weight":opt.bold?700:500,"text-anchor":opt.center?"middle":"start"
+    });
+    t.textContent=text; svg.appendChild(t); return t;
+  }
+
+  function ellipsePoint(cx,cy,rx,ry,deg){
+    const a=deg*Math.PI/180;
+    return {x:cx+rx*Math.cos(a), y:cy+ry*Math.sin(a)};
+  }
+
+  function pathFrom(points,close=false){
+    if(!points.length) return "";
+    let d = points.map((p,i)=>`${i?"L":"M"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
+    if(close) d += " Z";
+    return d;
+  }
+
+  function drawShortRowLoop(st,p){
+    const {cx,cy,rx,ry,scale,rowH} = st;
+    const extraLift = p.shortRowsExtra * rowH * scale * 0.95;
+    const wrap = p.shortRowsWidth;
+    const flatRatio = p.frontFlatRatio;
+    const flatScale = p.frontFlatScale;
+
+    const phi = 16 + 52 * flatRatio * flatScale;   // 控制前片平段宽度（角度）
+    const startA = 90 + phi;
+    const endA = 450 - phi;
+
+    const radialBase = (8 + 16 * wrap) * scale * 0.65;
+    const sideExtra = extraLift * (0.18 + 0.30 * wrap);
+
+    const outerPts = [];
+    for(let a=startA; a<=endA; a+=3){
+      const rad = a*Math.PI/180;
+      const u = Math.cos(rad), v = Math.sin(rad);
+
+      const backDist = Math.abs((((a - 270) % 360) + 540) % 360 - 180); // 到后中270°的角距
+      const t = clamp(1 - backDist / (180 - phi), 0, 1);  // 1在后中，0靠近平段端点
+      const profile = Math.pow(t, 1.25);
+
+      const radialOff = radialBase + sideExtra * (0.35 + 0.65*profile);
+      const yLift = extraLift * profile;
+
+      const x = cx + (rx + radialOff) * u;
+      const y = cy + (ry + radialOff*0.55) * v - yLift;
+      outerPts.push({x,y,a});
     }
 
-    function isIncreaseRow(row, rules) {
-      for (const rule of rules) {
-        if (row >= rule.start && row <= rule.end) {
-          return ((row - rule.start) % rule.every === 0);
-        }
-      }
-      return false;
+    const leftEnd = outerPts[0];
+    const rightEnd = outerPts[outerPts.length-1];
+
+    // 前片中央平段：用一段直线封口
+    const flatY = Math.max(leftEnd.y, rightEnd.y) - 1.5*scale + 2*scale*flatRatio;
+    const flatPts = [
+      {x:rightEnd.x, y:rightEnd.y},
+      {x:cx + (rightEnd.x-cx)*0.44, y:flatY},
+      {x:cx - (rightEnd.x-cx)*0.44, y:flatY},
+      {x:leftEnd.x, y:leftEnd.y}
+    ];
+
+    const closedPts = outerPts.concat(flatPts);
+    const fillPath = pathFrom(closedPts, true);
+
+    svg.appendChild(el("path",{
+      d: fillPath, fill:"rgba(37,99,235,0.10)", stroke:"none"
+    }));
+
+    svg.appendChild(el("path",{
+      d: pathFrom(outerPts,false), fill:"none", stroke:"#2563eb", "stroke-width":3.2
+    }));
+
+    svg.appendChild(el("path",{
+      d: `M ${rightEnd.x} ${rightEnd.y} L ${flatPts[1].x} ${flatPts[1].y} L ${flatPts[2].x} ${flatPts[2].y} L ${leftEnd.x} ${leftEnd.y}`,
+      fill:"none", stroke:"#2563eb", "stroke-width":3.2
+    }));
+
+    // 内部虚线，辅助理解
+    const innerStart = ellipsePoint(cx,cy,rx,ry,startA);
+    const innerEnd = ellipsePoint(cx,cy,rx,ry,450-phi);
+    const innerMidL = {x:cx - (innerEnd.x-cx)*0.42, y:cy + ry*0.95};
+    const innerMidR = {x:cx + (innerEnd.x-cx)*0.42, y:cy + ry*0.95};
+    svg.appendChild(el("path",{
+      d:`M ${innerStart.x} ${innerStart.y} Q ${cx} ${cy-ry-4} ${innerEnd.x} ${innerEnd.y}
+         M ${innerEnd.x} ${innerEnd.y} L ${innerMidR.x} ${innerMidR.y} L ${innerMidL.x} ${innerMidL.y} L ${innerStart.x} ${innerStart.y}`,
+      fill:"none", stroke:"#93c5fd", "stroke-width":1.6, "stroke-dasharray":"6 5"
+    }));
+
+    addText(cx, cy - ry - extraLift - 16, "引返路径 / 前后落差", {size:12, center:true, fill:"#1d4ed8", bold:true});
+    addText(cx, flatY + 18, "前片平段", {size:11, center:true, fill:"#1d4ed8", bold:true});
+
+    // 3个拖拽句柄
+    const topHandle = outerPts.reduce((a,b)=>a.y<b.y?a:b);
+    const sideAngle = 330;
+    let sideHandle = outerPts.reduce((best,pnt)=>Math.abs(pnt.a-sideAngle)<Math.abs(best.a-sideAngle)?pnt:best, outerPts[0]);
+    const flatHandle = rightEnd;
+
+    svg.appendChild(el("circle",{
+      cx:topHandle.x, cy:topHandle.y, r:8, fill:"#2563eb", stroke:"#fff", "stroke-width":2,
+      cursor:"ns-resize", "data-short":"center"
+    }));
+    svg.appendChild(el("circle",{
+      cx:sideHandle.x, cy:sideHandle.y, r:7, fill:"#60a5fa", stroke:"#fff", "stroke-width":2,
+      cursor:"ew-resize", "data-short":"width"
+    }));
+    svg.appendChild(el("circle",{
+      cx:flatHandle.x, cy:flatHandle.y, r:7, fill:"#3b82f6", stroke:"#fff", "stroke-width":2,
+      cursor:"ew-resize", "data-short":"flat"
+    }));
+
+    return { topHandle, sideHandle, flatHandle, extraLift, phi };
+  }
+
+  function draw(sim,p,schedule){
+    svg.innerHTML="";
+    const W=1000,H=760,cx=500,cy=380;
+    const maxShiftCm = p.totalRows*sim.stitchW*p.curveScale;
+    const maxDepthCm = p.totalRows*sim.rowH;
+    const maxShortCm = Math.max(p.shortRowsExtra,12)*sim.rowH;
+    const halfX = p.neckWidth/2 + maxShiftCm + 6;
+    const halfY = maxDepthCm + maxShortCm + p.neckHeight + 6;
+    const scale = Math.min((W/2-80)/halfX, (H/2-70)/halfY);
+    const rx=(p.neckWidth/2)*scale, ry=(p.neckHeight/2)*scale;
+
+    const state = {cx,cy,rx,ry,scale,rowH:sim.rowH,p};
+
+    svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"transparent"}));
+    addText(24,34,mode==="drag"?"拖拽设计：目标弧线 → 反推加针":"规则输入：加针规律 → 插肩线",{size:21,bold:true});
+    addText(24,58,mode==="drag"?"拖橙色点设计红线；拖蓝色点设计引返范围":"修改左侧规则后点击“生成 / 更新”",{size:13,fill:"#6b7280"});
+
+    svg.appendChild(el("line",{x1:cx,y1:18,x2:cx,y2:H-18,stroke:"#d1d5db","stroke-dasharray":"6 6"}));
+    svg.appendChild(el("line",{x1:18,y1:cy,x2:W-18,y2:cy,stroke:"#e5e7eb","stroke-dasharray":"6 6"}));
+
+    // 领口
+    svg.appendChild(el("ellipse",{cx,cy,rx,ry,fill:"#fff",stroke:"#b8bec9","stroke-width":2.7}));
+
+    // 引返路径示意
+    const shortRowGeom = drawShortRowLoop(state,p);
+
+    // 插肩线起点
+    const starts = [
+      {pt:ellipsePoint(cx,cy,rx,ry,230),sx:-1,sy:-1,name:"tl"},
+      {pt:ellipsePoint(cx,cy,rx,ry,310),sx: 1,sy:-1,name:"tr"},
+      {pt:ellipsePoint(cx,cy,rx,ry,130),sx:-1,sy: 1,name:"bl"},
+      {pt:ellipsePoint(cx,cy,rx,ry, 50),sx: 1,sy: 1,name:"br"}
+    ];
+
+    const actualSets=[], targetSets=[];
+    starts.forEach(s=>{
+      const actual=[], target=[];
+      sim.rows.forEach(row=>{
+        const dy = row.depthCm*scale;
+        actual.push({x:s.pt.x+s.sx*row.shiftCm*scale*p.curveScale, y:s.pt.y+s.sy*dy});
+        target.push({x:s.pt.x+s.sx*row.targetShiftCm*scale*p.curveScale, y:s.pt.y+s.sy*dy});
+      });
+      actualSets.push(actual); targetSets.push(target);
+    });
+
+    // 外轮廓示意
+    const tl=actualSets[0].at(-1), tr=actualSets[1].at(-1), bl=actualSets[2].at(-1), br=actualSets[3].at(-1);
+    svg.appendChild(el("path",{
+      d:`M ${tl.x} ${tl.y} Q ${cx} ${tl.y-40} ${tr.x} ${tr.y}
+         Q ${tr.x+65} ${cy} ${br.x} ${br.y}
+         Q ${cx} ${br.y+45} ${bl.x} ${bl.y}
+         Q ${bl.x-65} ${cy} ${tl.x} ${tl.y} Z`,
+      fill:"rgba(226,232,240,.45)", stroke:"#cbd5e1", "stroke-width":1.6
+    }));
+
+    if(mode==="drag" && p.showTarget){
+      targetSets.forEach(arr=>svg.appendChild(el("path",{
+        d:pathFrom(arr), fill:"none", stroke:"#0891b2", "stroke-width":2, "stroke-dasharray":"6 5", opacity:.92
+      })));
     }
 
-    function scheduleSummary(rules) {
-      if (!rules.length) return "无规则";
-      const set = new Set(rules.map(r => r.every));
-      return set.size === 1 ? `固定频率：每 ${rules[0].every} 行加一次` : "分段频率变化";
-    }
+    actualSets.forEach(arr=>svg.appendChild(el("path",{
+      d:pathFrom(arr), fill:"none", stroke:"#dc2626",
+      "stroke-width":Math.max(2.7,p.raglanWidth*.8),
+      "stroke-linecap":"round", "stroke-linejoin":"round"
+    })));
 
-    function simulate(params, rules) {
-      const errors = [];
-      if (params.totalStitches < 12) errors.push("总起针数太小。");
-      if (params.raglanWidth % 2 !== 0) errors.push("插肩线针数应为偶数。");
-      if (params.stitchGauge <= 0 || params.rowGauge <= 0) errors.push("横密和纵密必须大于 0。");
-      if (params.totalRows < 1) errors.push("总行数至少为 1。");
-      if (params.neckWidth <= 0 || params.neckHeight <= 0) errors.push("领口尺寸必须大于 0。");
-      if (params.shortRowsWidth < 0 || params.shortRowsWidth > 1) errors.push("引返作用宽度比例应在 0~1 之间。");
-
-      const split = initialSplit(params.totalStitches);
-      const stitchW = 10 / params.stitchGauge;
-      const rowH = 10 / params.rowGauge;
-
-      let increaseCount = 0;
-      const rows = [];
-
-      for (let r = 0; r <= params.totalRows; r++) {
-        if (r > 0 && isIncreaseRow(r, rules)) {
-          increaseCount += 1;
-        }
-        const front = split.front + 2 * increaseCount;
-        const back = split.back + 2 * increaseCount;
-        const leftSleeve = split.leftSleeve + 2 * increaseCount;
-        const rightSleeve = split.rightSleeve + 2 * increaseCount;
-        const total = params.totalStitches + 8 * increaseCount;
-
-        rows.push({
-          row: r,
-          incCount: increaseCount,
-          isIncRow: r > 0 && isIncreaseRow(r, rules),
-          front, back, leftSleeve, rightSleeve, total,
-          depthCm: r * rowH,
-          shiftCm: increaseCount * stitchW
+    if(p.showPoints){
+      sim.rows.forEach((row,i)=>{
+        if(!row.isIncRow) return;
+        actualSets.forEach(arr=>{
+          const q=arr[i];
+          svg.appendChild(el("circle",{cx:q.x, cy:q.y, r:2.7, fill:"#7c3aed", stroke:"#fff", "stroke-width":1}));
         });
-      }
-
-      return { errors, split, stitchW, rowH, rows };
-    }
-
-    function analyzeLineShape(rows, rules) {
-      if (!rows || rows.length < 3) {
-        return { theory: "数据不足", visual: "数据不足" };
-      }
-
-      const activeRules = rules.filter(r => r.end >= 1);
-      const everySet = new Set(activeRules.map(r => r.every));
-      let theory = everySet.size === 1
-        ? "理论上近似直线（离散显示会略带台阶）"
-        : "理论上为分段斜率变化，更可能出现弧线";
-
-      const pts = rows.map(r => ({ x: r.shiftCm, y: r.depthCm }));
-
-      const mid = Math.floor(pts.length / 2);
-      const earlySlope = (pts[mid].x - pts[0].x) / Math.max(1e-9, (pts[mid].y - pts[0].y));
-      const lateSlope = (pts[pts.length - 1].x - pts[mid].x) / Math.max(1e-9, (pts[pts.length - 1].y - pts[mid].y));
-
-      let visual;
-      if (everySet.size === 1) {
-        visual = "整体接近直线";
-      } else {
-        if (lateSlope > earlySlope + 0.02) {
-          visual = "越往下越外扩（外凸趋势）";
-        } else if (lateSlope < earlySlope - 0.02) {
-          visual = "越往下越趋缓（内凹趋势）";
-        } else {
-          visual = "有弧度，但整体较平缓";
-        }
-      }
-
-      return { theory, visual };
-    }
-
-    function svgEl(name, attrs = {}) {
-      const el = document.createElementNS("http://www.w3.org/2000/svg", name);
-      Object.entries(attrs).forEach(([k, v]) => {
-        if (v !== undefined) el.setAttribute(k, v);
       });
-      return el;
     }
 
-    function polylinePath(points) {
-      if (!points.length) return "";
-      return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
-    }
-
-    function ellipsePoint(cx, cy, rx, ry, deg) {
-      const rad = deg * Math.PI / 180;
-      return {
-        x: cx + rx * Math.cos(rad),
-        y: cy + ry * Math.sin(rad)
-      };
-    }
-
-    function addText(svg, x, y, text, fill, size, center = false, rotateDeg = 0) {
-      const t = svgEl("text", {
-        x, y, fill,
-        "font-size": size,
-        "font-weight": center ? "700" : "500",
-        "text-anchor": center ? "middle" : "start",
-        transform: rotateDeg ? `rotate(${rotateDeg} ${x} ${y})` : undefined
+    if(mode==="drag"){
+      controlRows.forEach((r,idx)=>{
+        if(idx===0) return;
+        starts.forEach((s,si)=>{
+          const tg=Math.max(0,interpMonotone(controlRows,controlGroups,r));
+          const x=s.pt.x+s.sx*tg*sim.stitchW*scale*p.curveScale;
+          const y=s.pt.y+s.sy*(r*sim.rowH*scale);
+          svg.appendChild(el("circle",{
+            cx:x, cy:y, r:8.5, fill:"#ea580c", stroke:"#fff", "stroke-width":2.3,
+            cursor:"ew-resize", "data-ctrl":idx, "data-line":si
+          }));
+        });
       });
-      t.textContent = text;
-      svg.appendChild(t);
-      return t;
+      addText(24,H-28,"提示：橙色点拖插肩弧度；蓝色点拖引返示意；左侧数值会同步变化。",{size:13,fill:"#9a3412",bold:true});
+    } else {
+      addText(24,H-28,`当前判断：${shapeText(schedule)}`,{size:13,fill:"#374151",bold:true});
     }
 
-    function drawChart(sim, params, rules, analysis) {
-      const svg = $("chart");
-      svg.innerHTML = "";
+    addText(cx, cy-ry-42, "后片", {size:16,center:true,bold:true});
+    addText(cx, cy+ry+48, "前片", {size:16,center:true,bold:true});
+    addText(Math.max(55,tl.x-28), cy, "左袖", {size:14,center:true,bold:true});
+    addText(Math.min(W-55,tr.x+28), cy, "右袖", {size:14,center:true,bold:true});
+    addText(cx, cy+5, "领口", {size:13,center:true,fill:"#6b7280",bold:true});
 
-      const W = 1000, H = 760;
-      const cx = 500, cy = 380;
+    svg._drawState = {scale,rx,ry,cx,cy,starts,sim,p,shortRowGeom};
+  }
 
-      const totalDepthCm = sim.rows[sim.rows.length - 1].depthCm;
-      const totalShiftCm = sim.rows[sim.rows.length - 1].shiftCm * params.curveScale;
-      const shortRowExtraCm = params.shortRowsExtra * sim.rowH;
-
-      const halfExtentX = params.neckWidth / 2 + totalShiftCm + 10;
-      const halfExtentY = totalDepthCm + shortRowExtraCm + params.neckHeight + 8;
-
-      const scale = Math.min((W / 2 - 90) / halfExtentX, (H / 2 - 70) / halfExtentY);
-
-      const rx = (params.neckWidth / 2) * scale;
-      const ry = (params.neckHeight / 2) * scale;
-
-      svg.appendChild(svgEl("text", {
-        x: 24, y: 36, fill: "#111827", "font-size": "22", "font-weight": "800"
-      })).textContent = "插肩线 + 后领引返示意";
-
-      svg.appendChild(svgEl("text", {
-        x: 24, y: 62, fill: "#6b7280", "font-size": "13"
-      })).textContent = `${scheduleSummary(rules)} ｜ 总行数 ${params.totalRows} ｜ 总起针 ${params.totalStitches}`;
-
-      svg.appendChild(svgEl("line", {
-        x1: cx, y1: 20, x2: cx, y2: H - 20,
-        stroke: "#d1d5db", "stroke-dasharray": "6 6"
-      }));
-      svg.appendChild(svgEl("line", {
-        x1: 20, y1: cy, x2: W - 20, y2: cy,
-        stroke: "#e5e7eb", "stroke-dasharray": "6 6"
-      }));
-
-      svg.appendChild(svgEl("ellipse", {
-        cx, cy, rx, ry,
-        fill: "#ffffff",
-        stroke: "#9ca3af",
-        "stroke-width": 2.5
-      }));
-
-      const widthRatio = params.shortRowsWidth;
-      const xOff = rx * widthRatio;
-      const yEdge = cy - ry * Math.sqrt(Math.max(0, 1 - (xOff * xOff) / (rx * rx)));
-      const lift = shortRowExtraCm * scale;
-
-      if (params.shortRowsExtra > 0 && widthRatio > 0) {
-        const leftX = cx - xOff;
-        const rightX = cx + xOff;
-
-        svg.appendChild(svgEl("path", {
-          d: `
-            M ${leftX} ${yEdge}
-            Q ${cx} ${cy - ry} ${rightX} ${yEdge}
-            Q ${cx} ${cy - ry - lift} ${leftX} ${yEdge}
-            Z
-          `,
-          fill: "rgba(37,99,235,0.12)",
-          stroke: "none"
-        }));
-
-        svg.appendChild(svgEl("path", {
-          d: `M ${leftX} ${yEdge} Q ${cx} ${cy - ry - lift} ${rightX} ${yEdge}`,
-          fill: "none",
-          stroke: "#2563eb",
-          "stroke-width": 3.2
-        }));
-
-        svg.appendChild(svgEl("path", {
-          d: `M ${leftX} ${yEdge} Q ${cx} ${cy - ry} ${rightX} ${yEdge}`,
-          fill: "none",
-          stroke: "#93c5fd",
-          "stroke-width": 1.6,
-          "stroke-dasharray": "5 4"
-        }));
-
-        addText(svg, cx, cy - ry - lift - 12, "引返后领弧度", "#1d4ed8", 13, true);
-      }
-
-      const topLeftStart = ellipsePoint(cx, cy, rx, ry, 230);
-      const topRightStart = ellipsePoint(cx, cy, rx, ry, 310);
-      const bottomLeftStart = ellipsePoint(cx, cy, rx, ry, 130);
-      const bottomRightStart = ellipsePoint(cx, cy, rx, ry, 50);
-
-      const topLeftPts = [];
-      const topRightPts = [];
-      const bottomLeftPts = [];
-      const bottomRightPts = [];
-
-      for (const row of sim.rows) {
-        const dx = row.shiftCm * scale * params.curveScale;
-        const dy = row.depthCm * scale;
-
-        topLeftPts.push({ x: topLeftStart.x - dx, y: topLeftStart.y - dy });
-        topRightPts.push({ x: topRightStart.x + dx, y: topRightStart.y - dy });
-        bottomLeftPts.push({ x: bottomLeftStart.x - dx, y: bottomLeftStart.y + dy });
-        bottomRightPts.push({ x: bottomRightStart.x + dx, y: bottomRightStart.y + dy });
-      }
-
-      const tl = topLeftPts[topLeftPts.length - 1];
-      const tr = topRightPts[topRightPts.length - 1];
-      const bl = bottomLeftPts[bottomLeftPts.length - 1];
-      const br = bottomRightPts[bottomRightPts.length - 1];
-
-      svg.appendChild(svgEl("path", {
-        d: `
-          M ${tl.x} ${tl.y}
-          Q ${cx} ${tl.y - 70} ${tr.x} ${tr.y}
-          Q ${tr.x + 120} ${cy} ${br.x} ${br.y}
-          Q ${cx} ${br.y + 90} ${bl.x} ${bl.y}
-          Q ${bl.x - 120} ${cy} ${tl.x} ${tl.y}
-          Z
-        `,
-        fill: "rgba(236, 242, 255, 0.55)",
-        stroke: "#cbd5e1",
-        "stroke-width": 2
-      }));
-
-      if (params.showAllRows && sim.rows.length <= 220) {
-        for (let i = 1; i < sim.rows.length; i++) {
-          const t1 = topLeftPts[i], t2 = topRightPts[i];
-          const b1 = bottomLeftPts[i], b2 = bottomRightPts[i];
-
-          svg.appendChild(svgEl("line", {
-            x1: t1.x, y1: t1.y, x2: t2.x, y2: t2.y,
-            stroke: "rgba(148,163,184,0.28)", "stroke-width": 1
-          }));
-          svg.appendChild(svgEl("line", {
-            x1: b1.x, y1: b1.y, x2: b2.x, y2: b2.y,
-            stroke: "rgba(148,163,184,0.28)", "stroke-width": 1
-          }));
-        }
-      }
-
-      const raglanStyle = {
-        fill: "none",
-        stroke: "#dc2626",
-        "stroke-width": Math.max(2.5, params.raglanWidth * 0.9),
-        "stroke-linecap": "round",
-        "stroke-linejoin": "round"
-      };
-
-      svg.appendChild(svgEl("path", { d: polylinePath(topLeftPts), ...raglanStyle }));
-      svg.appendChild(svgEl("path", { d: polylinePath(topRightPts), ...raglanStyle }));
-      svg.appendChild(svgEl("path", { d: polylinePath(bottomLeftPts), ...raglanStyle }));
-      svg.appendChild(svgEl("path", { d: polylinePath(bottomRightPts), ...raglanStyle }));
-
-      if (params.showPoints) {
-        for (let i = 1; i < sim.rows.length; i++) {
-          if (!sim.rows[i].isIncRow) continue;
-          const list = [topLeftPts[i], topRightPts[i], bottomLeftPts[i], bottomRightPts[i]];
-          for (const p of list) {
-            svg.appendChild(svgEl("circle", {
-              cx: p.x, cy: p.y, r: 3.2,
-              fill: "#a78bfa",
-              stroke: "#ffffff",
-              "stroke-width": 1.2
-            }));
-          }
-        }
-      }
-
-      addText(svg, cx, cy - ry - 40, "后片", "#111827", 18, true);
-      addText(svg, cx, cy + ry + 54, "前片", "#111827", 18, true);
-      addText(svg, tl.x - 40, cy, "左袖", "#111827", 16, true);
-      addText(svg, tr.x + 40, cy, "右袖", "#111827", 16, true);
-      addText(svg, cx, cy + 6, "领口", "#6b7280", 14, true);
-
-      addText(svg, 28, H - 48, `理论判断：${analysis.theory}`, "#374151", 14, false);
-      addText(svg, 28, H - 26, `图像判断：${analysis.visual}`, "#374151", 14, false);
-    }
-
-    function renderStats(sim, params, analysis) {
-      const finalRow = sim.rows[sim.rows.length - 1];
-      const depth = finalRow.depthCm.toFixed(2);
-      const shortDepth = (params.shortRowsExtra * sim.rowH).toFixed(2);
-      $("stats").innerHTML = [
-        statBox("最终总针数", `${finalRow.total}`),
-        statBox("前片 / 后片", `${finalRow.front} / ${finalRow.back}`),
-        statBox("左右袖", `${finalRow.leftSleeve} / ${finalRow.rightSleeve}`),
-        statBox("育克深度", `${depth} cm`),
-        statBox("引返落差", `${shortDepth} cm`),
-        statBox("插肩线判断", analysis.visual)
-      ].join("");
-    }
-
-    function statBox(k, v) {
-      return `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`;
-    }
-
-    function render() {
-      $("errorBox").textContent = "";
-      updateSplitInfo();
-
-      const params = getParams();
-      const { rules, errors: ruleErrors } = parseRules(params.rulesText);
-      const sim = simulate(params, rules);
-      const allErrors = [...ruleErrors, ...sim.errors];
-
-      if (allErrors.length) {
-        $("errorBox").textContent = allErrors.join("\n");
-        $("stats").innerHTML = "";
-        $("chart").innerHTML = "";
-        return;
-      }
-
-      const analysis = analyzeLineShape(sim.rows, rules);
-      renderStats(sim, params, analysis);
-      drawChart(sim, params, rules, analysis);
-    }
-
-    function setPresetLinear() {
-      $("rules").value = "1-80:2";
-      $("totalRows").value = 80;
-      $("shortRowsExtra").value = 6;
-      $("shortRowsWidth").value = 0.72;
-      render();
-    }
-
-    function setPresetCurve() {
-      $("rules").value = "1-20:4\n21-50:3\n51-90:2";
-      $("totalRows").value = 90;
-      $("shortRowsExtra").value = 8;
-      $("shortRowsWidth").value = 0.75;
-      render();
-    }
-
-    function setPresetMixed() {
-      $("rules").value = "1-24:2\n25-48:3\n49-80:4";
-      $("totalRows").value = 80;
-      $("shortRowsExtra").value = 5;
-      $("shortRowsWidth").value = 0.68;
-      render();
-    }
-
-    // 弹窗
-    function openHelp() {
-      $("helpModal").classList.add("open");
-      $("helpModal").setAttribute("aria-hidden", "false");
-      document.body.style.overflow = "hidden";
-    }
-    function closeHelp() {
-      $("helpModal").classList.remove("open");
-      $("helpModal").setAttribute("aria-hidden", "true");
-      document.body.style.overflow = "";
-    }
-
-    $("helpBtn").addEventListener("click", openHelp);
-    $("closeHelpBtn").addEventListener("click", closeHelp);
-    $("helpModal").addEventListener("click", (e) => {
-      if (e.target === $("helpModal")) closeHelp();
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeHelp();
-    });
-
-    $("drawBtn").addEventListener("click", render);
-    $("presetLinear").addEventListener("click", setPresetLinear);
-    $("presetCurve").addEventListener("click", setPresetCurve);
-    $("presetMixed").addEventListener("click", setPresetMixed);
-
-    [
-      "totalStitches", "raglanWidth", "stitchGauge", "rowGauge", "totalRows",
-      "neckWidth", "neckHeight", "curveScale", "shortRowsExtra", "shortRowsWidth"
-    ].forEach(id => $(id).addEventListener("input", updateSplitInfo));
-
+  function render(){
+    $("errorBox").textContent="";
     updateSplitInfo();
+    const p=getParams();
+    if(p.raglanWidth % 2 !== 0){ $("errorBox").textContent="插肩线针数请使用偶数，例如 2 或 4。"; return; }
+
+    let schedule;
+    if(mode==="rule"){
+      const parsed=parseRules($("rules").value.trim());
+      if(parsed.errors.length){ $("errorBox").textContent=parsed.errors.join("\n"); return; }
+      schedule=scheduleFromRules(p.totalRows, parsed.rules);
+    }else{
+      ensureControlsFromCurrentRules(false);
+      schedule=scheduleFromDrag(p.totalRows);
+    }
+
+    const sim=simulate(p,schedule);
+    renderStats(sim,p,schedule);
+    renderControlEditor();
+    renderDragSummary(p,schedule);
+    draw(sim,p,schedule);
+  }
+
+  function switchMode(next){
+    if(next===mode) return;
+    if(next==="drag") ensureControlsFromCurrentRules(true);
+    mode=next;
+    $("ruleModeBtn").classList.toggle("active",mode==="rule");
+    $("dragModeBtn").classList.toggle("active",mode==="drag");
+    $("ruleSection").hidden=mode!=="rule";
+    $("dragSection").hidden=mode!=="drag";
+    $("modeTip").innerHTML = mode==="rule"
+      ? `当前是 <b>规则输入模式</b>：输入“每几行加一次”，程序计算插肩线。`
+      : `<span class="drag-badge">拖拽设计已开启</span>　拖橙色点设计插肩线，拖蓝色点设计引返/前片平段。`;
     render();
-  </script>
+  }
+
+  function applyPreset(type){
+    const p=getParams();
+    controlRows=buildControlRows(p.totalRows);
+    const max=Math.max(1,Math.round(p.totalRows/2));
+    const t=controlRows.map(r=>r/p.totalRows);
+    if(type==="straight") controlGroups=t.map(x=>Math.round(max*x));
+    if(type==="outward") controlGroups=t.map(x=>Math.round(max*Math.pow(x,1.55)));
+    if(type==="inward") controlGroups=t.map(x=>Math.round(max*Math.pow(x,.62)));
+    if(type==="irregular"){
+      controlGroups=t.map((x,i)=>{
+        const wobble=[0,-.03,.07,-.04,.06,0][i]||0;
+        return Math.round(max*clamp(Math.pow(x,1.05)+wobble,0,1));
+      });
+      for(let i=1;i<controlGroups.length;i++) controlGroups[i]=Math.max(controlGroups[i], controlGroups[i-1]);
+    }
+    controlGroups[0]=0;
+    render();
+  }
+
+  // 拖拽
+  svg.addEventListener("pointerdown", e=>{
+    const t=e.target;
+    if(t.dataset.ctrl!==undefined){
+      activeDrag={type:"ctrl", index:+t.dataset.ctrl, line:+t.dataset.line, pointerId:e.pointerId};
+      svg.setPointerCapture(e.pointerId); e.preventDefault();
+    }else if(t.dataset.short){
+      activeDrag={type:"short", which:t.dataset.short, pointerId:e.pointerId};
+      svg.setPointerCapture(e.pointerId); e.preventDefault();
+    }
+  });
+
+  svg.addEventListener("pointermove", e=>{
+    if(!activeDrag || !svg._drawState) return;
+    const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    const m=svg.getScreenCTM(); if(!m) return;
+    const q=pt.matrixTransform(m.inverse());
+    const st=svg._drawState;
+
+    if(activeDrag.type==="ctrl"){
+      const s=st.starts[activeDrag.line];
+      const dx=(q.x-s.pt.x)*s.sx;
+      const denom=Math.max(1e-9, st.sim.stitchW*st.scale*st.p.curveScale);
+      setControlGroup(activeDrag.index, dx/denom);
+      render();
+      return;
+    }
+
+    if(activeDrag.which==="center"){
+      const neckTop = st.cy - st.ry;
+      const lift = clamp(neckTop - q.y, 0, 2000);
+      const rows = Math.round(lift / Math.max(1e-9, st.sim.rowH * st.scale * 0.95));
+      $("shortRowsExtra").value = clamp(rows,0,80);
+      render();
+      return;
+    }
+
+    if(activeDrag.which==="width"){
+      const ratio = clamp((q.x - st.cx - st.rx*0.55) / Math.max(1e-9, st.rx*1.7), 0.1, 1);
+      $("shortRowsWidth").value = ratio.toFixed(2);
+      render();
+      return;
+    }
+
+    if(activeDrag.which==="flat"){
+      const s = clamp((q.x - st.cx) / Math.max(1e-9, st.rx), 0, 0.98);
+      const phiDeg = Math.asin(s) * 180 / Math.PI;
+      const ratio = clamp((phiDeg - 16) / (52 * Math.max(0.6, num("frontFlatScale",1))), 0, 0.5);
+      $("frontFlatRatio").value = ratio.toFixed(2);
+      render();
+      return;
+    }
+  });
+
+  function endDrag(){
+    if(!activeDrag) return;
+    try{ svg.releasePointerCapture(activeDrag.pointerId); }catch(_){}
+    activeDrag=null;
+  }
+  svg.addEventListener("pointerup", endDrag);
+  svg.addEventListener("pointercancel", endDrag);
+
+  $("ruleModeBtn").addEventListener("click", ()=>switchMode("rule"));
+  $("dragModeBtn").addEventListener("click", ()=>switchMode("drag"));
+  $("drawBtn").addEventListener("click", ()=>{
+    if(mode==="drag"){
+      const p=getParams();
+      if(!controlRows.length || controlRows.at(-1)!==p.totalRows) ensureControlsFromCurrentRules(true);
+    }
+    render();
+  });
+
+  $("straightPreset").addEventListener("click", ()=>applyPreset("straight"));
+  $("outwardPreset").addEventListener("click", ()=>applyPreset("outward"));
+  $("inwardPreset").addEventListener("click", ()=>applyPreset("inward"));
+  $("irregularPreset").addEventListener("click", ()=>applyPreset("irregular"));
+
+  $("resetBtn").addEventListener("click", ()=>{
+    $("totalStitches").value=120; $("raglanWidth").value=2; $("stitchGauge").value=24;
+    $("rowGauge").value=32; $("totalRows").value=80; $("curveScale").value=1;
+    $("neckWidth").value=16; $("neckHeight").value=6; $("rules").value="1-80:2";
+    $("shortRowsExtra").value=6; $("shortRowsWidth").value=.72; $("frontFlatRatio").value=.25; $("frontFlatScale").value=1;
+    controlRows=[]; controlGroups=[]; mode="rule";
+    $("ruleModeBtn").classList.add("active"); $("dragModeBtn").classList.remove("active");
+    $("ruleSection").hidden=false; $("dragSection").hidden=true;
+    $("modeTip").innerHTML=`当前是 <b>规则输入模式</b>：输入“每几行加一次”，程序计算插肩线。`;
+    render();
+  });
+
+  [
+    "totalStitches","raglanWidth","stitchGauge","rowGauge","curveScale","neckWidth","neckHeight",
+    "shortRowsExtra","shortRowsWidth","frontFlatRatio","frontFlatScale","showPoints","showTarget"
+  ].forEach(id => $(id).addEventListener("change", render));
+  $("totalRows").addEventListener("change", ()=>{
+    if(mode==="drag") ensureControlsFromCurrentRules(true);
+    render();
+  });
+  $("rules").addEventListener("change", ()=>{ if(mode==="rule") render(); });
+
+  // Help
+  const modal=$("helpModal");
+  function openHelp(){ modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); document.body.style.overflow="hidden"; }
+  function closeHelp(){ modal.classList.remove("open"); modal.setAttribute("aria-hidden","true"); document.body.style.overflow=""; }
+  $("helpBtn").addEventListener("click", openHelp);
+  $("closeHelp").addEventListener("click", closeHelp);
+  modal.addEventListener("click", e=>{ if(e.target===modal) closeHelp(); });
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeHelp(); });
+
+  render();
+})();
+</script>
 </body>
 </html>
