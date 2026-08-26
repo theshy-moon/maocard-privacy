@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>插肩毛衣加针可视化 v0</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+    .app {
+      display: flex;
+      min-height: 100vh;
+      gap: 16px;
+      padding: 16px;
+    }
+    .panel {
+      width: 360px;
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      overflow: auto;
+    }
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 10px 0;
+    }
+    h2 {
+      font-size: 16px;
+      margin: 18px 0 10px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .muted {
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .field label {
+      font-size: 13px;
+      color: #374151;
+      font-weight: 600;
+    }
+    .field input, .field textarea, .field select {
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+    .field input:focus, .field textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+    }
+    button.secondary {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+    button.gray {
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .stat {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .stat .k {
+      color: #6b7280;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .stat .v {
+      font-size: 20px;
+      font-weight: 800;
+      color: #111827;
+    }
+    .small-box {
+      background: #f9fafb;
+      border: 1px dashed #d1d5db;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #374151;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .checkline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    .checkline input {
+      transform: scale(1.15);
+    }
+    #svgWrap {
+      width: 100%;
+      height: 760px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      background:
+        linear-gradient(to right, rgba(148,163,184,0.10) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148,163,184,0.10) 1px, transparent 1px),
+        #fcfdff;
+      background-size: 32px 32px;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .footer-note {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+    .error {
+      color: #b91c1c;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 6px;
+      white-space: pre-wrap;
+    }
+    .legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #374151;
+    }
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .swatch {
+      width: 18px;
+      height: 4px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+    @media (max-width: 1100px) {
+      .app { flex-direction: column; }
+      .panel { width: 100%; }
+      .stats { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+      #svgWrap { height: 620px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel">
+      <h1>插肩毛衣加针可视化 v0</h1>
+      <div class="muted">
+        目标：可视化 <b>四条对称插肩线</b> 与 <b>引返后领弧度</b>。<br>
+        说明：这是几何示意工具，不是严格物理仿真。
+      </div>
+
+      <h2>基础参数</h2>
+      <div class="grid2">
+        <div class="field">
+          <label>总起针数</label>
+          <input id="totalStitches" type="number" min="12" step="2" value="120">
+        </div>
+        <div class="field">
+          <label>插肩线针数（偶数）</label>
+          <input id="raglanWidth" type="number" min="2" step="2" value="2">
+        </div>
+        <div class="field">
+          <label>横密（每10cm几针）</label>
+          <input id="stitchGauge" type="number" min="1" step="0.1" value="24">
+        </div>
+        <div class="field">
+          <label>纵密（每10cm几行）</label>
+          <input id="rowGauge" type="number" min="1" step="0.1" value="32">
+        </div>
+        <div class="field">
+          <label>总行数</label>
+          <input id="totalRows" type="number" min="1" step="1" value="80">
+        </div>
+        <div class="field">
+          <label>领口宽度（cm）</label>
+          <input id="neckWidth" type="number" min="1" step="0.1" value="16">
+        </div>
+        <div class="field">
+          <label>领口高度（cm）</label>
+          <input id="neckHeight" type="number" min="1" step="0.1" value="6">
+        </div>
+        <div class="field">
+          <label>线条平滑系数（0.6~1.5）</label>
+          <input id="curveScale" type="number" min="0.6" max="1.5" step="0.05" value="1.0">
+        </div>
+      </div>
+
+      <div class="small-box" id="splitInfo"></div>
+
+      <h2>加针规则</h2>
+      <div class="field">
+        <label>分段规则（每行一个，格式：起始行-结束行:每n行加一次）</label>
+        <textarea id="rules">1-80:2</textarea>
+      </div>
+      <div class="muted">
+        例如：<br>
+        <code>1-80:2</code>：1~80行，每2行加一次（每次总+8）<br>
+        <code>1-20:4</code><br>
+        <code>21-50:3</code><br>
+        <code>51-90:2</code><br>
+        表示先慢后快，更容易出现弧线。
+      </div>
+
+      <h2>引返 / 后领弧度</h2>
+      <div class="grid2">
+        <div class="field">
+          <label>引返最大额外行数</label>
+          <input id="shortRowsExtra" type="number" min="0" step="1" value="6">
+        </div>
+        <div class="field">
+          <label>引返作用宽度比例（0~1）</label>
+          <input id="shortRowsWidth" type="number" min="0" max="1" step="0.05" value="0.72">
+        </div>
+      </div>
+
+      <div class="checkline">
+        <input id="showPoints" type="checkbox" checked>
+        <label for="showPoints">显示加针发生行的标记点</label>
+      </div>
+      <div class="checkline">
+        <input id="showAllRows" type="checkbox">
+        <label for="showAllRows">显示每一行的淡色层线（行数很多时建议关闭）</label>
+      </div>
+
+      <div class="btn-row">
+        <button id="drawBtn">生成 / 更新</button>
+        <button class="secondary" id="presetLinear">示例：固定直线</button>
+        <button class="secondary" id="presetCurve">示例：先慢后快</button>
+        <button class="gray" id="presetMixed">示例：先快后慢</button>
+      </div>
+
+      <div class="error" id="errorBox"></div>
+
+      <div class="footer-note">
+        <b>解释：</b><br>
+        - “每 n 行加一次”按你朋友的说法：一组 = 1 行加针 + (n-1) 行不加针。<br>
+        - 默认假设四条插肩线完全对称。<br>
+        - 前 / 后 / 左袖 / 右袖起始分配默认近似为：1/3、1/3、1/6、1/6。
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card">
+        <div class="stats" id="stats"></div>
+        <div class="legend">
+          <span><i class="swatch" style="background:#dc2626;"></i> 插肩线</span>
+          <span><i class="swatch" style="background:#2563eb;"></i> 后领引返弧度</span>
+          <span><i class="swatch" style="background:#9ca3af;"></i> 领口</span>
+          <span><i class="swatch" style="background:#a78bfa;"></i> 加针行标记</span>
+        </div>
+      </div>
+
+      <div class="card" id="svgWrap">
+        <svg id="chart" viewBox="0 0 1000 760" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function getParams() {
+      return {
+        totalStitches: parseInt($("totalStitches").value, 10),
+        raglanWidth: parseInt($("raglanWidth").value, 10),
+        stitchGauge: parseFloat($("stitchGauge").value),
+        rowGauge: parseFloat($("rowGauge").value),
+        totalRows: parseInt($("totalRows").value, 10),
+        neckWidth: parseFloat($("neckWidth").value),
+        neckHeight: parseFloat($("neckHeight").value),
+        curveScale: parseFloat($("curveScale").value),
+        shortRowsExtra: parseInt($("shortRowsExtra").value, 10),
+        shortRowsWidth: parseFloat($("shortRowsWidth").value),
+        showPoints: $("showPoints").checked,
+        showAllRows: $("showAllRows").checked,
+        rulesText: $("rules").value.trim()
+      };
+    }
+
+    function initialSplit(total) {
+      let front = Math.round(total / 3);
+      let back = Math.round(total / 3);
+      let remain = total - front - back;
+      let leftSleeve = Math.floor(remain / 2);
+      let rightSleeve = remain - leftSleeve;
+      return { front, back, leftSleeve, rightSleeve };
+    }
+
+    function updateSplitInfo() {
+      const total = parseInt($("totalStitches").value || "0", 10);
+      const s = initialSplit(total);
+      $("splitInfo").innerHTML =
+        `<b>默认起始分配：</b><br>
+         前片：${s.front} 针　后片：${s.back} 针　左袖：${s.leftSleeve} 针　右袖：${s.rightSleeve} 针`;
+    }
+
+    function parseRules(text) {
+      const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+      const rules = [];
+      const errors = [];
+
+      lines.forEach((line, idx) => {
+        const m = line.match(/^(\d+)\s*-\s*(\d+)\s*:\s*(\d+)$/);
+        if (!m) {
+          errors.push(`第 ${idx + 1} 行规则格式错误：${line}`);
+          return;
+        }
+        const start = parseInt(m[1], 10);
+        const end = parseInt(m[2], 10);
+        const every = parseInt(m[3], 10);
+        if (start > end) errors.push(`第 ${idx + 1} 行规则起始行不能大于结束行：${line}`);
+        if (every < 1) errors.push(`第 ${idx + 1} 行规则中的 n 必须 >= 1：${line}`);
+        rules.push({ start, end, every, raw: line });
+      });
+
+      rules.sort((a, b) => a.start - b.start);
+
+      for (let i = 1; i < rules.length; i++) {
+        if (rules[i].start <= rules[i - 1].end) {
+          errors.push(`规则区间有重叠：${rules[i - 1].raw} 与 ${rules[i].raw}`);
+        }
+      }
+
+      return { rules, errors };
+    }
+
+    function isIncreaseRow(row, rules) {
+      for (const rule of rules) {
+        if (row >= rule.start && row <= rule.end) {
+          return ((row - rule.start) % rule.every === 0);
+        }
+      }
+      return false;
+    }
+
+    function scheduleSummary(rules) {
+      if (!rules.length) return "无规则";
+      const set = new Set(rules.map(r => r.every));
+      return set.size === 1 ? `固定频率：每 ${rules[0].every} 行加一次` : "分段频率变化";
+    }
+
+    function simulate(params, rules) {
+      const errors = [];
+      if (params.totalStitches < 12) errors.push("总起针数太小。");
+      if (params.raglanWidth % 2 !== 0) errors.push("插肩线针数应为偶数。");
+      if (params.stitchGauge <= 0 || params.rowGauge <= 0) errors.push("横密和纵密必须大于 0。");
+      if (params.totalRows < 1) errors.push("总行数至少为 1。");
+      if (params.neckWidth <= 0 || params.neckHeight <= 0) errors.push("领口尺寸必须大于 0。");
+      if (params.shortRowsWidth < 0 || params.shortRowsWidth > 1) errors.push("引返作用宽度比例应在 0~1 之间。");
+
+      const split = initialSplit(params.totalStitches);
+      const stitchW = 10 / params.stitchGauge; // cm / 针
+      const rowH = 10 / params.rowGauge;       // cm / 行
+
+      let increaseCount = 0;
+      const rows = [];
+
+      for (let r = 0; r <= params.totalRows; r++) {
+        if (r > 0 && isIncreaseRow(r, rules)) {
+          increaseCount += 1;
+        }
+        const front = split.front + 2 * increaseCount;
+        const back = split.back + 2 * increaseCount;
+        const leftSleeve = split.leftSleeve + 2 * increaseCount;
+        const rightSleeve = split.rightSleeve + 2 * increaseCount;
+        const total = params.totalStitches + 8 * increaseCount;
+
+        rows.push({
+          row: r,
+          incCount: increaseCount,
+          isIncRow: r > 0 && isIncreaseRow(r, rules),
+          front, back, leftSleeve, rightSleeve, total,
+          depthCm: r * rowH,
+          shiftCm: increaseCount * stitchW
+        });
+      }
+
+      return { errors, split, stitchW, rowH, rows };
+    }
+
+    function analyzeLineShape(rows, rules) {
+      if (!rows || rows.length < 3) {
+        return { theory: "数据不足", visual: "数据不足" };
+      }
+
+      const activeRules = rules.filter(r => r.end >= 1);
+      const everySet = new Set(activeRules.map(r => r.every));
+      let theory = everySet.size === 1
+        ? "理论上近似直线（离散显示会略带台阶）"
+        : "理论上为分段斜率变化，更可能出现弧线";
+
+      const pts = rows.map(r => ({ x: r.shiftCm, y: r.depthCm }));
+
+      const n = pts.length;
+      let sumX = 0, sumY = 0, sumXY = 0, sumYY = 0;
+      for (const p of pts) {
+        sumX += p.x;
+        sumY += p.y;
+        sumXY += p.x * p.y;
+        sumYY += p.y * p.y;
+      }
+      const denom = n * sumYY - sumY * sumY;
+      const b = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+      const a = (sumX - b * sumY) / n;
+
+      let maxDev = 0;
+      for (const p of pts) {
+        const pred = a + b * p.y;
+        maxDev = Math.max(maxDev, Math.abs(p.x - pred));
+      }
+
+      const mid = Math.floor(pts.length / 2);
+      const earlySlope = (pts[mid].x - pts[0].x) / Math.max(1e-9, (pts[mid].y - pts[0].y));
+      const lateSlope = (pts[pts.length - 1].x - pts[mid].x) / Math.max(1e-9, (pts[pts.length - 1].y - pts[mid].y));
+
+      let visual;
+      if (everySet.size === 1) {
+        visual = "整体接近直线";
+      } else {
+        if (lateSlope > earlySlope + 0.02) {
+          visual = "越往下越外扩（外凸趋势）";
+        } else if (lateSlope < earlySlope - 0.02) {
+          visual = "越往下越趋缓（内凹趋势）";
+        } else {
+          visual = "有弧度，但整体较平缓";
+        }
+      }
+
+      return {
+        theory,
+        visual,
+        maxDeviation: maxDev.toFixed(3)
+      };
+    }
+
+    function svgEl(name, attrs = {}) {
+      const el = document.createElementNS("http://www.w3.org/2000/svg", name);
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      return el;
+    }
+
+    function polylinePath(points) {
+      if (!points.length) return "";
+      return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
+    }
+
+    function drawChart(sim, params, rules, analysis) {
+      const svg = $("chart");
+      svg.innerHTML = "";
+
+      const W = 1000, H = 760;
+      const cx = 500, cy = 380;
+
+      const totalDepthCm = sim.rows[sim.rows.length - 1].depthCm;
+      const totalShiftCm = sim.rows[sim.rows.length - 1].shiftCm * params.curveScale;
+      const shortRowExtraCm = params.shortRowsExtra * sim.rowH;
+
+      const halfExtentX = params.neckWidth / 2 + totalShiftCm + 10;
+      const halfExtentY = totalDepthCm + shortRowExtraCm + params.neckHeight + 8;
+
+      const scale = Math.min((W / 2 - 90) / halfExtentX, (H / 2 - 70) / halfExtentY);
+
+      const rx = (params.neckWidth / 2) * scale;
+      const ry = (params.neckHeight / 2) * scale;
+
+      // 标题
+      svg.appendChild(svgEl("text", {
+        x: 24, y: 36, fill: "#111827", "font-size": "22", "font-weight": "800"
+      })).textContent = "插肩线 + 后领引返示意";
+
+      svg.appendChild(svgEl("text", {
+        x: 24, y: 62, fill: "#6b7280", "font-size": "13"
+      })).textContent = `${scheduleSummary(rules)} ｜ 总行数 ${params.totalRows} ｜ 总起针 ${params.totalStitches}`;
+
+      // 中心参考线
+      svg.appendChild(svgEl("line", {
+        x1: cx, y1: 20, x2: cx, y2: H - 20,
+        stroke: "#d1d5db", "stroke-dasharray": "6 6"
+      }));
+      svg.appendChild(svgEl("line", {
+        x1: 20, y1: cy, x2: W - 20, y2: cy,
+        stroke: "#e5e7eb", "stroke-dasharray": "6 6"
+      }));
+
+      // 领口椭圆
+      svg.appendChild(svgEl("ellipse", {
+        cx, cy, rx, ry,
+        fill: "#ffffff",
+        stroke: "#9ca3af",
+        "stroke-width": 2.5
+      }));
+
+      // 引返后领弧度带
+      const widthRatio = params.shortRowsWidth;
+      const xOff = rx * widthRatio;
+      const yEdge = cy - ry * Math.sqrt(Math.max(0, 1 - (xOff * xOff) / (rx * rx)));
+      const lift = shortRowExtraCm * scale;
+
+      if (params.shortRowsExtra > 0 && widthRatio > 0) {
+        const leftX = cx - xOff;
+        const rightX = cx + xOff;
+
+        const band = svgEl("path", {
+          d: `
+            M ${leftX} ${yEdge}
+            Q ${cx} ${cy - ry} ${rightX} ${yEdge}
+            Q ${cx} ${cy - ry - lift} ${leftX} ${yEdge}
+            Z
+          `,
+          fill: "rgba(37,99,235,0.12)",
+          stroke: "none"
+        });
+        svg.appendChild(band);
+
+        const arc = svgEl("path", {
+          d: `M ${leftX} ${yEdge} Q ${cx} ${cy - ry - lift} ${rightX} ${yEdge}`,
+          fill: "none",
+          stroke: "#2563eb",
+          "stroke-width": 3.2
+        });
+        svg.appendChild(arc);
+
+        const arcBase = svgEl("path", {
+          d: `M ${leftX} ${yEdge} Q ${cx} ${cy - ry} ${rightX} ${yEdge}`,
+          fill: "none",
+          stroke: "#93c5fd",
+          "stroke-width": 1.6,
+          "stroke-dasharray": "5 4"
+        });
+        svg.appendChild(arcBase);
+
+        const label = svgEl("text", {
+          x: cx, y: cy - ry - lift - 12,
+          fill: "#1d4ed8", "font-size": "13", "text-anchor": "middle", "font-weight": "700"
+        });
+        label.textContent = "引返后领弧度";
+        svg.appendChild(label);
+      }
+
+      // 四个起始点（在领口附近的四个象限）
+      const anchors = {
+        backLeft:  ellipsePoint(cx, cy, rx, ry, 225),
+        backRight: ellipsePoint(cx, cy, rx, ry, 315),
+        frontLeft: ellipsePoint(cx, cy, rx, ry, 135),
+        frontRight: ellipsePoint(cx, cy, rx, ry, 45)
+      };
+
+      // 注意：为了符合“上方是后片、下方是前片”的直觉，这里交换了一下前后命名的绘图方向
+      // 上：back， 下：front
+      const topLeftStart = ellipsePoint(cx, cy, rx, ry, 230);
+      const topRightStart = ellipsePoint(cx, cy, rx, ry, 310);
+      const bottomLeftStart = ellipsePoint(cx, cy, rx, ry, 130);
+      const bottomRightStart = ellipsePoint(cx, cy, rx, ry, 50);
+
+      const topLeftPts = [];
+      const topRightPts = [];
+      const bottomLeftPts = [];
+      const bottomRightPts = [];
+
+      for (const row of sim.rows) {
+        const dx = row.shiftCm * scale * params.curveScale;
+        const dy = row.depthCm * scale;
+
+        topLeftPts.push({
+          x: topLeftStart.x - dx,
+          y: topLeftStart.y - dy
+        });
+        topRightPts.push({
+          x: topRightStart.x + dx,
+          y: topRightStart.y - dy
+        });
+        bottomLeftPts.push({
+          x: bottomLeftStart.x - dx,
+          y: bottomLeftStart.y + dy
+        });
+        bottomRightPts.push({
+          x: bottomRightStart.x + dx,
+          y: bottomRightStart.y + dy
+        });
+      }
+
+      // 外轮廓（示意）
+      const tl = topLeftPts[topLeftPts.length - 1];
+      const tr = topRightPts[topRightPts.length - 1];
+      const bl = bottomLeftPts[bottomLeftPts.length - 1];
+      const br = bottomRightPts[bottomRightPts.length - 1];
+
+      const outline = svgEl("path", {
+        d: `
+          M ${tl.x} ${tl.y}
+          Q ${cx} ${tl.y - 70} ${tr.x} ${tr.y}
+          Q ${tr.x + 120} ${cy} ${br.x} ${br.y}
+          Q ${cx} ${br.y + 90} ${bl.x} ${bl.y}
+          Q ${bl.x - 120} ${cy} ${tl.x} ${tl.y}
+          Z
+        `,
+        fill: "rgba(236, 242, 255, 0.55)",
+        stroke: "#cbd5e1",
+        "stroke-width": 2
+      });
+      svg.appendChild(outline);
+
+      // 行层线（可选）
+      if (params.showAllRows && sim.rows.length <= 220) {
+        for (let i = 1; i < sim.rows.length; i++) {
+          const t1 = topLeftPts[i], t2 = topRightPts[i];
+          const b1 = bottomLeftPts[i], b2 = bottomRightPts[i];
+          svg.appendChild(svgEl("line", {
+            x1: t1.x, y1: t1.y, x2: t2.x, y2: t2.y,
+            stroke: "rgba(148,163,184,0.28)", "stroke-width": 1
+          }));
+          svg.appendChild(svgEl("line", {
+            x1: b1.x, y1: b1.y, x2: b2.x, y2: b2.y,
+            stroke: "rgba(148,163,184,0.28)", "stroke-width": 1
+          }));
+        }
+      }
+
+      // 四条插肩线
+      const raglanStyle = {
+        fill: "none",
+        stroke: "#dc2626",
+        "stroke-width": Math.max(2.5, params.raglanWidth * 0.9),
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      };
+
+      svg.appendChild(svgEl("path", { d: polylinePath(topLeftPts), ...raglanStyle }));
+      svg.appendChild(svgEl("path", { d: polylinePath(topRightPts), ...raglanStyle }));
+      svg.appendChild(svgEl("path", { d: polylinePath(bottomLeftPts), ...raglanStyle }));
+      svg.appendChild(svgEl("path", { d: polylinePath(bottomRightPts), ...raglanStyle }));
+
+      // 加针行标记
+      if (params.showPoints) {
+        for (let i = 1; i < sim.rows.length; i++) {
+          if (!sim.rows[i].isIncRow) continue;
+          const list = [topLeftPts[i], topRightPts[i], bottomLeftPts[i], bottomRightPts[i]];
+          for (const p of list) {
+            svg.appendChild(svgEl("circle", {
+              cx: p.x, cy: p.y, r: 3.2,
+              fill: "#a78bfa",
+              stroke: "#ffffff",
+              "stroke-width": 1.2
+            }));
+          }
+        }
+      }
+
+      // 区域标签
+      addText(svg, cx, cy - ry - 40, "后片", "#111827", 18, true);
+      addText(svg, cx, cy + ry + 54, "前片", "#111827", 18, true);
+      addText(svg, tl.x - 40, cy, "左袖", "#111827", 16, true);
+      addText(svg, tr.x + 40, cy, "右袖", "#111827", 16, true);
+
+      addText(svg, cx, cy + 6, "领口", "#6b7280", 14, true);
+
+      // 标注总深度
+      svg.appendChild(svgEl("line", {
+        x1: W - 60, y1: topLeftStart.y, x2: W - 60, y2: bottomLeftPts[bottomLeftPts.length - 1].y,
+        stroke: "#64748b", "stroke-width": 2
+      }));
+      svg.appendChild(svgEl("line", {
+        x1: W - 68, y1: topLeftStart.y, x2: W - 52, y2: topLeftStart.y,
+        stroke: "#64748b", "stroke-width": 2
+      }));
+      svg.appendChild(svgEl("line", {
+        x1: W - 68, y1: bottomLeftPts[bottomLeftPts.length - 1].y, x2: W - 52, y2: bottomLeftPts[bottomLeftPts.length - 1].y,
+        stroke: "#64748b", "stroke-width": 2
+      }));
+      addText(svg, W - 74, (topLeftStart.y + bottomLeftPts[bottomLeftPts.length - 1].y) / 2,
+        `${totalDepthCm.toFixed(2)} cm`, "#334155", 13, true, -90);
+
+      // 左上角注释
+      addText(svg, 28, H - 48, `理论判断：${analysis.theory}`, "#374151", 14, false);
+      addText(svg, 28, H - 26, `图像判断：${analysis.visual}`, "#374151", 14, false);
+    }
+
+    function ellipsePoint(cx, cy, rx, ry, deg) {
+      const rad = deg * Math.PI / 180;
+      return {
+        x: cx + rx * Math.cos(rad),
+        y: cy + ry * Math.sin(rad)
+      };
+    }
+
+    function addText(svg, x, y, text, fill, size, center = false, rotateDeg = 0) {
+      const t = svgEl("text", {
+        x, y, fill,
+        "font-size": size,
+        "font-weight": center ? "700" : "500",
+        "text-anchor": center ? "middle" : "start",
+        transform: rotateDeg ? `rotate(${rotateDeg} ${x} ${y})` : undefined
+      });
+      t.textContent = text;
+      svg.appendChild(t);
+      return t;
+    }
+
+    function renderStats(sim, params, analysis) {
+      const finalRow = sim.rows[sim.rows.length - 1];
+      const depth = finalRow.depthCm.toFixed(2);
+      const shortDepth = (params.shortRowsExtra * sim.rowH).toFixed(2);
+      const html = [
+        statBox("最终总针数", `${finalRow.total}`),
+        statBox("前片 / 后片", `${finalRow.front} / ${finalRow.back}`),
+        statBox("左右袖", `${finalRow.leftSleeve} / ${finalRow.rightSleeve}`),
+        statBox("育克深度", `${depth} cm`),
+        statBox("引返落差", `${shortDepth} cm`),
+        statBox("插肩线判断", analysis.visual)
+      ].join("");
+      $("stats").innerHTML = html;
+    }
+
+    function statBox(k, v) {
+      return `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+    }
+
+    function render() {
+      $("errorBox").textContent = "";
+      updateSplitInfo();
+
+      const params = getParams();
+      const { rules, errors: ruleErrors } = parseRules(params.rulesText);
+      const sim = simulate(params, rules);
+      const allErrors = [...ruleErrors, ...sim.errors];
+
+      if (allErrors.length) {
+        $("errorBox").textContent = allErrors.join("\n");
+        $("stats").innerHTML = "";
+        $("chart").innerHTML = "";
+        return;
+      }
+
+      const analysis = analyzeLineShape(sim.rows, rules);
+      renderStats(sim, params, analysis);
+      drawChart(sim, params, rules, analysis);
+    }
+
+    // 预设
+    function setPresetLinear() {
+      $("rules").value = "1-80:2";
+      $("totalRows").value = 80;
+      $("shortRowsExtra").value = 6;
+      $("shortRowsWidth").value = 0.72;
+      render();
+    }
+
+    function setPresetCurve() {
+      $("rules").value = "1-20:4\n21-50:3\n51-90:2";
+      $("totalRows").value = 90;
+      $("shortRowsExtra").value = 8;
+      $("shortRowsWidth").value = 0.75;
+      render();
+    }
+
+    function setPresetMixed() {
+      $("rules").value = "1-24:2\n25-48:3\n49-80:4";
+      $("totalRows").value = 80;
+      $("shortRowsExtra").value = 5;
+      $("shortRowsWidth").value = 0.68;
+      render();
+    }
+
+    // 绑定
+    $("drawBtn").addEventListener("click", render);
+    $("presetLinear").addEventListener("click", setPresetLinear);
+    $("presetCurve").addEventListener("click", setPresetCurve);
+    $("presetMixed").addEventListener("click", setPresetMixed);
+
+    [
+      "totalStitches", "raglanWidth", "stitchGauge", "rowGauge", "totalRows",
+      "neckWidth", "neckHeight", "curveScale", "shortRowsExtra", "shortRowsWidth"
+    ].forEach(id => $(id).addEventListener("input", updateSplitInfo));
+
+    updateSplitInfo();
+    render();
+  </script>
+</body>
+</html>
