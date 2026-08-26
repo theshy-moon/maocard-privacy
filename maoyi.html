@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>插肩毛衣曲线设计器 v2</title>
+  <title>插肩毛衣曲线设计器 v2.5</title>
   <style>
     * { box-sizing: border-box; }
     :root {
@@ -126,6 +126,20 @@
       margin-top:8px; padding:8px 10px; border-radius:8px; background:#fff7ed; color:#9a3412;
       font-size:12px; line-height:1.6;
     }
+    .instruction-box {
+      margin-top:10px; border:1px solid #d1d5db; border-radius:12px; background:#fff; overflow:hidden;
+    }
+    .instruction-head {
+      display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;
+      padding:10px 12px; background:#f8fafc; border-bottom:1px solid #e5e7eb;
+    }
+    .instruction-text {
+      margin:0; padding:12px; max-height:360px; overflow:auto; white-space:pre-wrap; word-break:break-word;
+      font-family:Consolas,"Microsoft YaHei",monospace; font-size:12.5px; line-height:1.75; color:#1f2937;
+      background:#fff;
+    }
+    .export-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:9px; }
+    .success-note { color:#047857; font-size:12px; min-height:18px; margin-top:6px; }
     .inline-note {
       display:inline-block; font-size:11px; color:#6b7280; margin-left:6px;
     }
@@ -174,11 +188,11 @@
 <div class="app">
   <aside class="panel">
     <div class="title-row">
-      <h1>插肩毛衣曲线设计器 v2</h1>
+      <h1>插肩毛衣曲线设计器 v2.5</h1>
       <button class="help" id="helpBtn">？ 使用说明</button>
     </div>
     <div class="muted">
-      v2 新增真正的<b>逐层引返模拟</b>：每一层都从前片一侧出发，依次经过四条插肩线、两袖和后片，再进入另一侧前片后转身；下一行反向织回。
+      v2.5：在 v2 的逐层引返和 v1.3 的插肩曲线反推基础上，新增<b>可直接照着查看的织法说明</b>，并支持导出 TXT 与 JSON。
     </div>
 
     <div class="mode-switch">
@@ -329,6 +343,43 @@
       <b>怎么读：</b>例如“第3层 / 第5~6行 / 每侧进入前片 8 针”，表示这两行分别向左右两侧往返，
       都会穿过四条插肩线；转身点已经进入前片 8 针。蓝色路径与红色插肩线的交点，就是这一层实际途经插肩线的位置。
     </div>
+
+    <h2>v2.5：生成织法说明</h2>
+    <div class="small-box">
+      这里会把当前<b>红色插肩规则 + 蓝色逐层引返</b>自动整理成一份可阅读的织法说明。
+      它会告诉你每段多久 +8、每层引返在哪两行、每侧进入前片多少针，以及这一行是否同时做插肩加针。
+    </div>
+
+    <div class="grid2" style="margin-top:10px;">
+      <div class="field">
+        <label>说明详细程度</label>
+        <select id="instructionDetail">
+          <option value="compact" selected>简洁：每个引返层一条</option>
+          <option value="detailed">详细：逐行写左右往返</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>第1个引返行方向</label>
+        <select id="shortRowDirection">
+          <option value="lr" selected>左前片 → 右前片</option>
+          <option value="rl">右前片 → 左前片</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="instruction-box">
+      <div class="instruction-head">
+        <b>当前方案说明</b>
+        <span class="subtle">不绑定德式引返 / W&T 等具体转身技法</span>
+      </div>
+      <pre class="instruction-text" id="instructionText"></pre>
+    </div>
+
+    <div class="export-row">
+      <button class="action secondary" id="downloadTxtBtn">导出 TXT 织法说明</button>
+      <button class="action gray" id="downloadJsonBtn">导出 JSON 设计数据</button>
+    </div>
+    <div class="success-note" id="exportNote"></div>
     <div class="checkline"><input id="showPoints" type="checkbox" checked><label for="showPoints">显示加针行标记点</label></div>
     <div class="checkline"><input id="showTarget" type="checkbox" checked><label for="showTarget">拖拽模式显示“目标曲线”虚线</label></div>
 
@@ -340,7 +391,7 @@
     <div class="error" id="errorBox"></div>
     <div class="footer">
       红线是“按真实可执行加针规则量化后的插肩线”；青色虚线是理想目标弧线；
-      蓝色线现在表示真实的逐层引返范围：每层对应2行、左右各一次转身，并在图上穿过四条插肩线。
+      蓝色线表示逐层引返范围；v2.5 织法说明会把当前红线规则与蓝线引返合并，并可导出 TXT / JSON。
     </div>
   </aside>
 
@@ -364,116 +415,80 @@
 <div class="modal-bg" id="helpModal" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <div class="modal-head">
-      <h2 id="helpTitle">v2 使用说明</h2>
+      <h2 id="helpTitle">v2.5 使用说明</h2>
       <button class="close" id="closeHelp">×</button>
     </div>
     <div class="modal-body">
       <div class="callout">
-        <b>v2 的核心：</b><br>
-        插肩线部分继续保留 v1.3 的“规则输入 ↔ 拖拽反推”；同时把原来只是示意的蓝色引返升级成了
-        <b>真正的逐层往返模型</b>。每层按 2 行计算，左右各转身一次，每一趟都会经过四条插肩线。
+        <b>v2.5 现在可以完成三件事：</b><br>
+        ① 设计红色插肩线；② 模拟蓝色逐层引返；③ 把两者合并成一份可阅读、可导出的织法说明。
       </div>
 
-      <h3>一、最推荐的使用顺序</h3>
+      <h3>一、推荐使用流程</h3>
       <ol>
-        <li>先填写总起针数、横密、纵密和育克总行数。</li>
-        <li>先设计红色插肩线：知道规则就用“规则输入”；只想找好看的弧度就用“拖拽设计”。</li>
-        <li>红线确定后，再设置“引返 v2”。</li>
-        <li>重点观察蓝色一层层的路径、前片中央剩余针数，以及下方逐层表格。</li>
+        <li>填写总起针数、横密、纵密和育克总行数。</li>
+        <li>设计红色插肩线：知道规则就用“规则输入”；只想找好看的弧度就用“拖拽设计”。</li>
+        <li>如果使用拖拽设计，选择“简洁 / 平衡 / 精细”反推，并确认反推规则。</li>
+        <li>设置引返开始行、引返层数、第一层进入前片针数、最终前片平段比例和推进节奏。</li>
+        <li>查看蓝色逐层引返线和逐层表格。</li>
+        <li>最后查看“v2.5：生成织法说明”，需要保存时导出 TXT；以后做3D或继续开发时可导出 JSON。</li>
       </ol>
 
-      <h3>二、红色插肩线怎么设计？</h3>
-      <p><b>规则输入模式</b>使用：</p>
+      <h3>二、插肩加针规则</h3>
+      <p>规则格式始终为：</p>
+      <div class="example">起始行-结束行:每n行加一次</div>
+      <p>例如：</p>
       <div class="example">1-20:4
 21-50:3
 51-90:2</div>
-      <p>
-        表示对应行段内分别每4行、每3行、每2行进行一次总 +8 针。
-        底层规则始终是 <b>n ≥ 2</b>，不能连续每行加针。
-      </p>
-      <p>
-        <b>拖拽设计模式</b>则直接拖橙色点。青色虚线是你想要的连续目标弧线，
-        红色实线是程序拟合成真实可织规则后的结果。
-      </p>
+      <p>每个加针行总共 +8 针：四条插肩线，每条线左右各 +1。程序强制 <b>n ≥ 2</b>，不能连续每行加针。</p>
 
-      <h3>三、“简洁 / 平衡 / 精细”反推有什么区别？</h3>
+      <h3>三、拖拽反推怎么用？</h3>
+      <p>橙色点用于拖插肩弧度；青色虚线是目标弧线；红色实线是反推成真实加针规则后的可织曲线。</p>
       <ul>
-        <li><b>简洁：</b>最多 2 段规则，最容易照着织。</li>
-        <li><b>平衡：</b>最多 3 段，推荐。</li>
-        <li><b>精细：</b>最多 5 段，更贴近拖出的曲线。</li>
+        <li><b>简洁：</b>最多2段规则，优先好织。</li>
+        <li><b>平衡：</b>最多3段，推荐。</li>
+        <li><b>精细：</b>最多5段，更贴近目标弧度。</li>
       </ul>
-      <p>程序不会为了凑段数强行分段，并且所有反推规则都会保证 n ≥ 2。</p>
+      <p>拖拽默认会留出向内和向外的调整余量；如果忠实载入“每2行+8”，因为已经达到最密上限，所以只能往里调整。</p>
 
-      <h3>四、v2 的“引返层”到底是什么？</h3>
-      <p>
-        为了让模型直观且对称，v2 把一次完整的左右往返定义成 <b>1 层 = 2 行</b>：
-      </p>
-      <ol>
-        <li>第1行从一侧前片转身点出发，经过该侧插肩线、袖子、后片、另一只袖子以及另一侧插肩线，进入另一侧前片后转身。</li>
-        <li>第2行反方向织回来，并在另一侧前片的对应位置转身。</li>
-      </ol>
-      <p>
-        因此每一层的蓝色路径都会经过 <b>4 条插肩线</b>。下一层的转身点继续向前片中央推进，
-        前片中间暂时没有织到的平段就会逐渐变窄。
-      </p>
+      <h3>四、v2 的逐层引返模型</h3>
+      <p><b>1层 = 2行</b>：第一行从一侧前片出发，经过该侧前插肩线、袖子、后插肩线、后片、另一侧后插肩线、袖子、前插肩线，进入另一侧前片后转身；第二行反方向织回。</p>
+      <p>因此每一层都会经过四条插肩线。层数增加时，转身点逐渐向前片中央推进，而前片中央暂时没有织到的平段逐渐变窄。</p>
 
-      <h3>五、引返参数分别是什么意思？</h3>
+      <h3>五、引返参数解释</h3>
       <table class="help-table">
         <tr><th>参数</th><th>含义</th></tr>
-        <tr>
-          <td>引返开始行</td>
-          <td>从育克的第几行开始做引返。第1层占“开始行”和下一行。</td>
-        </tr>
-        <tr>
-          <td>引返层数</td>
-          <td>一共做多少层。每层按2行计算，所以6层约等于后片中央比前片中央多12行。</td>
-        </tr>
-        <tr>
-          <td>第1层每侧进入前片</td>
-          <td>第一层从插肩线进入前片多少针后转身。后续层会继续往前片中央推进。</td>
-        </tr>
-        <tr>
-          <td>最终前片中间保留比例</td>
-          <td>最后一层结束时，前片中央仍然没有参与这些引返的部分占前片约多少。默认0.25就是约四分之一。</td>
-        </tr>
-        <tr>
-          <td>推进节奏</td>
-          <td>决定每一层转身点怎样向前推进：均匀、先慢后快、或先快后慢。</td>
-        </tr>
+        <tr><td>引返开始行</td><td>育克从第几行开始进入逐层引返。</td></tr>
+        <tr><td>引返层数</td><td>每层占2行，因此6层对应12个引返行。</td></tr>
+        <tr><td>第1层每侧进入前片</td><td>第一层越过前插肩线后，在前片内继续织多少针再转身。</td></tr>
+        <tr><td>最终前片中间保留比例</td><td>最后一层结束时，前片中央仍暂时未织到的比例；0.25表示约四分之一。</td></tr>
+        <tr><td>推进节奏</td><td>每一层向前片中央推进得均匀、先慢后快、或先快后慢。</td></tr>
       </table>
 
-      <h3>六、下面的逐层表格怎么看？</h3>
-      <p>例如：</p>
-      <div class="example">第3层 ｜ 第5~6行 ｜ 每侧进入前片 8针 ｜ 前片中间暂不织 24针 ｜ 第5行+8</div>
-      <p>
-        意思是：这一层用了第5、6两行，左右各做一次转身；两边转身点都已经进入前片8针；
-        前片最中间还有24针暂时不参加这层引返。如果这两行中某一行正好是插肩加针行，表格也会标出来。
-      </p>
+      <h3>六、逐层表格怎么看？</h3>
+      <div class="example">第3层｜第5~6行｜每侧进入前片8针｜前片中间暂不织24针｜第5行+8</div>
+      <p>表示这一层的两行左右各往返一次，每趟都经过四条插肩线；如果其中某行碰巧也是插肩加针行，表格会明确写出。</p>
 
-      <h3>七、蓝色路径和红色插肩线为什么会相交？</h3>
-      <p>
-        这是刻意的。你朋友确认的织法里，引返每一趟都会途经四条插肩线，所以 v2 会按该层所在的育克行，
-        找到四条红色插肩线的真实位置，再让蓝色引返路径逐一穿过它们。
-      </p>
+      <h3>七、v2.5 的“织法说明”是什么？</h3>
+      <p>它把当前设计自动整理成文本，包含：</p>
+      <ul>
+        <li>起针数和前/后/两袖初始分配；</li>
+        <li>最终针数和育克深度；</li>
+        <li>插肩加针分段规则；</li>
+        <li>每一层引返的行号、转身位置、前片中间剩余针数；</li>
+        <li>详细模式下，每一个引返行的方向和是否同时 +8。</li>
+      </ul>
+      <p>“第1个引返行方向”只是用来决定文本里先写左→右还是右→左，不代表正面/反面。</p>
 
-      <h3>八、“后领落差”现在怎么算？</h3>
-      <p>
-        v2 不再让你手填一个抽象的“额外行数”。因为 1 层就是 2 行，所以：
-      </p>
-      <div class="example">后片中央相对前片中央的理论最大额外行数 ≈ 引返层数 × 2</div>
-      <p>
-        程序再结合纵密把它换算成厘米显示。这个值描述几何上的行差，不包含洗后伸缩、线材弹性等物理效应。
-      </p>
+      <h3>八、TXT 和 JSON 分别有什么用？</h3>
+      <ul>
+        <li><b>TXT：</b>给人看，保存当前织法说明。</li>
+        <li><b>JSON：</b>给程序看，保存当前参数、规则、逐层引返、最终针数和拖拽控制点；后续做3D时可以直接作为输入数据。</li>
+      </ul>
 
-      <h3>九、v2 目前没有模拟什么？</h3>
-      <p>
-        v2 模拟的是“转身范围和行数结构”，暂时不绑定某一种具体转身技法，例如德式引返、Wrap & Turn 等。
-        不同技法在转身针本身的处理上不同，但“这一趟织到哪里、经过哪些插肩线、前片中间剩多少”这一层级的几何逻辑可以共用。
-      </p>
-
-      <div class="callout">
-        <b>注意：</b>这仍然是几何/针数设计工具，不是纱线力学仿真。真实成衣还受线材、针号、手劲、花样和下水影响。
-      </div>
+      <h3>九、当前模型的边界</h3>
+      <p>v2.5 规定“这一行织到哪里、在哪里转身、是否在插肩线加针”，但不绑定德式引返、Wrap & Turn 等具体转身针处理。真实成衣还会受到线材、针号、手劲、花样和下水影响。</p>
     </div>
     </div>
   </div>
@@ -489,6 +504,7 @@
   let controlRows = [];
   let controlGroups = [];
   let activeDrag = null;
+  let lastDesignPackage = null;
   let lastReverseRuleText = "";
   let lastReverseRuleNote = "";
   let dragStartNote = "";
@@ -1234,7 +1250,6 @@
     svg.appendChild(el("line",{x1:18,y1:cy,x2:W-18,y2:cy,stroke:"#e5e7eb","stroke-dasharray":"6 6"}));
 
     svg.appendChild(el("ellipse",{cx,cy,rx,ry,fill:"#fff",stroke:"#b8bec9","stroke-width":2.7}));
-    drawShortRowLoop(state,p);
 
     const starts = [
       {pt:ellipsePoint(cx,cy,rx,ry,230),sx:-1,sy:-1},
@@ -1314,6 +1329,183 @@
     svg._drawState = {scale,rx,ry,cx,cy,starts,sim,p};
   }
 
+  function currentRuleLines(schedule){
+    if(mode==="drag" && Array.isArray(schedule.ruleLines) && schedule.ruleLines.length){
+      return schedule.ruleLines.slice();
+    }
+    const parsed=parseRules($("rules").value.trim());
+    if(parsed.errors.length) return [];
+    return parsed.rules.map(r=>`${r.start}-${r.end}:${r.every}`);
+  }
+
+  function tempoLabel(value){
+    if(value==="slowfast") return "先慢后快";
+    if(value==="fastslow") return "先快后慢";
+    return "均匀";
+  }
+
+  function buildInstructionText(sim,p,schedule,shortPlan){
+    const detail=$("instructionDetail").value || "compact";
+    const firstDir=$("shortRowDirection").value || "lr";
+    const s=sim.split;
+    const end=sim.rows[sim.rows.length-1];
+    const ruleLines=currentRuleLines(schedule);
+    const lines=[];
+
+    lines.push("插肩毛衣设计方案（v2.5）");
+    lines.push("================================");
+    lines.push("");
+    lines.push("【1. 基础参数】");
+    lines.push(`总起针数：${p.totalStitches} 针`);
+    lines.push(`初始分配：前片 ${s.front} / 后片 ${s.back} / 左袖 ${s.leftSleeve} / 右袖 ${s.rightSleeve} 针`);
+    lines.push(`插肩线宽度：${p.raglanWidth} 针`);
+    lines.push(`横密：${p.stitchGauge} 针 / 10cm；纵密：${p.rowGauge} 行 / 10cm`);
+    lines.push(`育克总行数：${p.totalRows} 行；约 ${end.depthCm.toFixed(2)} cm`);
+    lines.push(`育克结束针数：总 ${end.total}；前 ${end.front}；后 ${end.back}；左袖 ${end.leftSleeve}；右袖 ${end.rightSleeve}`);
+    lines.push("");
+
+    lines.push("【2. 插肩加针规则】");
+    lines.push("每个加针行：四条插肩线左右各 +1，共 +8 针；n 必须 ≥ 2。");
+    if(ruleLines.length) ruleLines.forEach(r=>lines.push(r));
+    else lines.push("无加针规则");
+    lines.push(`共执行 ${schedule.incRows.length} 次 +8，总增加 ${schedule.incRows.length*8} 针。`);
+    lines.push("");
+
+    lines.push("【3. 引返设置】");
+    if(shortPlan.errors.length){
+      lines.push(`引返参数有冲突：${shortPlan.errors.join("；")}`);
+    }else{
+      lines.push(`开始：第 ${p.shortRowStart} 行；共 ${p.shortRowLayers} 层 = ${shortPlan.extraRows} 行。`);
+      lines.push(`第1层每侧进入前片：${p.shortRowFirstAdvance} 针；推进节奏：${tempoLabel(p.shortRowTempo)}。`);
+      lines.push(`最后一层前片中央暂不织：${shortPlan.finalFlat} 针 ≈ ${(shortPlan.finalFlatRatio*100).toFixed(1)}%。`);
+      lines.push(`理论最大前后行差：${shortPlan.extraRows} 行 ≈ ${shortPlan.dropCm.toFixed(2)} cm。`);
+      lines.push("注意：每层 = 2 行；两行方向相反，每一趟都经过四条插肩线。具体转身技法（德式/W&T等）未指定。");
+      lines.push("");
+
+      lines.push("【4. 逐层引返】");
+      shortPlan.layers.forEach(layer=>{
+        const incA=sim.rows[layer.rowStart].isIncRow;
+        const incB=sim.rows[layer.rowEnd].isIncRow;
+        const incBrief=[incA?`第${layer.rowStart}行+8`:null,incB?`第${layer.rowEnd}行+8`:null].filter(Boolean).join("，") || "这2行均不加针";
+
+        if(detail==="compact"){
+          lines.push(`第${layer.index}层（第${layer.rowStart}~${layer.rowEnd}行）：每侧进入前片 ${layer.advance} 针后转身；前片中央暂不织 ${layer.centerUnworked} 针；${incBrief}。`);
+        }else{
+          const dir1 = firstDir==="lr" ? "左前片 → 右前片" : "右前片 → 左前片";
+          const dir2 = firstDir==="lr" ? "右前片 → 左前片" : "左前片 → 右前片";
+          const route1 = firstDir==="lr"
+            ? `从左侧前片转身点出发，经过左前插肩线 → 左袖 → 左后插肩线 → 后片 → 右后插肩线 → 右袖 → 右前插肩线，进入右前片 ${layer.advance} 针后转身`
+            : `从右侧前片转身点出发，经过右前插肩线 → 右袖 → 右后插肩线 → 后片 → 左后插肩线 → 左袖 → 左前插肩线，进入左前片 ${layer.advance} 针后转身`;
+          const route2 = firstDir==="lr"
+            ? `反向织回：经过右前插肩线 → 右袖 → 右后插肩线 → 后片 → 左后插肩线 → 左袖 → 左前插肩线，进入左前片 ${layer.advance} 针后转身`
+            : `反向织回：经过左前插肩线 → 左袖 → 左后插肩线 → 后片 → 右后插肩线 → 右袖 → 右前插肩线，进入右前片 ${layer.advance} 针后转身`;
+          lines.push(`第${layer.index}层：`);
+          lines.push(`  第${layer.rowStart}行（${dir1}）：${route1}；${incA?"途经四条插肩线时按规则共 +8":"本行不加针"}。`);
+          lines.push(`  第${layer.rowEnd}行（${dir2}）：${route2}；${incB?"途经四条插肩线时按规则共 +8":"本行不加针"}。`);
+          lines.push(`  这一层结束时：前片中央暂不织 ${layer.centerUnworked} 针。`);
+        }
+      });
+
+      const lastRow=shortPlan.layers.length ? shortPlan.layers[shortPlan.layers.length-1].rowEnd : p.shortRowStart-1;
+      if(lastRow<p.totalRows){
+        lines.push("");
+        lines.push("【5. 引返结束后】");
+        lines.push(`从第 ${lastRow+1} 行继续织到第 ${p.totalRows} 行，仍按上面的插肩加针规则执行。`);
+      }
+    }
+
+    lines.push("");
+    lines.push("【说明】");
+    lines.push("本工具给出的是针数、行数、转身范围和插肩加针的几何/结构方案，不指定某一种引返转身技法，也不模拟纱线弹性、手劲、下水和穿着拉伸。实际开织前建议用密度样确认。");
+    return lines.join("\n");
+  }
+
+  function buildDesignPackage(sim,p,schedule,shortPlan,instructionText){
+    return {
+      schema:"raglan-knitting-designer",
+      version:"2.5",
+      mode,
+      parameters:{
+        totalStitches:p.totalStitches,
+        raglanWidth:p.raglanWidth,
+        stitchGaugePer10cm:p.stitchGauge,
+        rowGaugePer10cm:p.rowGauge,
+        totalRows:p.totalRows,
+        neckWidthCm:p.neckWidth,
+        neckHeightCm:p.neckHeight
+      },
+      initialSplit:{...sim.split},
+      raglan:{
+        ruleLines:currentRuleLines(schedule),
+        increaseRows:schedule.incRows.slice(),
+        increaseCount:schedule.incRows.length,
+        increasePerEvent:8,
+        constraint:"n>=2; no consecutive increase rows",
+        dragControlRows:mode==="drag"?controlRows.slice():[],
+        dragControlGroups:mode==="drag"?controlGroups.slice():[]
+      },
+      shortRows:{
+        startRow:p.shortRowStart,
+        layers:p.shortRowLayers,
+        rowsPerLayer:2,
+        firstAdvanceEachSide:p.shortRowFirstAdvance,
+        finalFrontFlatRatio:p.frontFlatRatio,
+        tempo:p.shortRowTempo,
+        theoreticalExtraRows:shortPlan.extraRows,
+        theoreticalDropCm:shortPlan.dropCm,
+        finalCenterUnworkedStitches:shortPlan.finalFlat,
+        plan:shortPlan.layers.map(x=>({
+          layer:x.index,
+          rowStart:x.rowStart,
+          rowEnd:x.rowEnd,
+          advanceEachSide:x.advance,
+          frontStitches:x.frontStitches,
+          centerUnworked:x.centerUnworked,
+          increaseRows:x.incRows.slice()
+        })),
+        warnings:shortPlan.warnings.slice(),
+        errors:shortPlan.errors.slice()
+      },
+      finalCounts:{
+        total:sim.rows.at(-1).total,
+        front:sim.rows.at(-1).front,
+        back:sim.rows.at(-1).back,
+        leftSleeve:sim.rows.at(-1).leftSleeve,
+        rightSleeve:sim.rows.at(-1).rightSleeve,
+        yokeDepthCm:sim.rows.at(-1).depthCm
+      },
+      instruction:{
+        detail:$("instructionDetail").value,
+        firstShortRowDirection:$("shortRowDirection").value,
+        text:instructionText
+      }
+    };
+  }
+
+  function renderInstruction(sim,p,schedule,shortPlan){
+    const txt=buildInstructionText(sim,p,schedule,shortPlan);
+    $("instructionText").textContent=txt;
+    lastDesignPackage=buildDesignPackage(sim,p,schedule,shortPlan,txt);
+  }
+
+  function safeFileStamp(){
+    const d=new Date();
+    const pad=n=>String(n).padStart(2,"0");
+    return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+  }
+
+  function downloadBlob(filename,content,type){
+    const blob=new Blob([content],{type});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
   function render(){
     $("errorBox").textContent="";
     updateSplitInfo();
@@ -1345,6 +1537,7 @@
 
     renderStats(sim,p,schedule,shortPlan);
     renderShortRowPlan(shortPlan,p);
+    renderInstruction(sim,p,schedule,shortPlan);
 
     if(mode==="drag"){
       renderControlEditor();
@@ -1470,6 +1663,7 @@
     $("neckWidth").value=16; $("neckHeight").value=6; $("rules").value="1-80:2";
     $("shortRowStart").value=1; $("shortRowLayers").value=6; $("shortRowFirstAdvance").value=2;
     $("frontFlatRatio").value=.25; $("shortRowTempo").value="uniform"; $("showShortRows").checked=true; $("fitMode").value="balanced";
+    $("instructionDetail").value="compact"; $("shortRowDirection").value="lr"; $("exportNote").textContent="";
     controlRows=[]; controlGroups=[]; dragStartNote=""; mode="rule";
     $("ruleModeBtn").classList.add("active"); $("dragModeBtn").classList.remove("active");
     $("ruleSection").hidden=false; $("dragSection").hidden=true;
@@ -1487,6 +1681,20 @@
     render();
   });
   $("rules").addEventListener("change", ()=>{ if(mode==="rule") render(); });
+  $("instructionDetail").addEventListener("change", render);
+  $("shortRowDirection").addEventListener("change", render);
+
+  $("downloadTxtBtn").addEventListener("click", ()=>{
+    if(!lastDesignPackage) return;
+    downloadBlob(`raglan_knitting_plan_${safeFileStamp()}.txt`, lastDesignPackage.instruction.text, "text/plain;charset=utf-8");
+    $("exportNote").textContent="TXT 已生成。";
+  });
+
+  $("downloadJsonBtn").addEventListener("click", ()=>{
+    if(!lastDesignPackage) return;
+    downloadBlob(`raglan_knitting_design_${safeFileStamp()}.json`, JSON.stringify(lastDesignPackage,null,2), "application/json;charset=utf-8");
+    $("exportNote").textContent="JSON 已生成，可用于后续3D版本或继续开发。";
+  });
 
   const modal=$("helpModal");
   function openHelp(){ modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); document.body.style.overflow="hidden"; }
