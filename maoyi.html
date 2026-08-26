@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>插肩毛衣曲线设计器 v1.2</title>
+  <title>插肩毛衣曲线设计器 v1.2.1</title>
   <style>
     * { box-sizing: border-box; }
     :root {
@@ -156,11 +156,11 @@
 <div class="app">
   <aside class="panel">
     <div class="title-row">
-      <h1>插肩毛衣曲线设计器 v1.2</h1>
+      <h1>插肩毛衣曲线设计器 v1.2.1</h1>
       <button class="help" id="helpBtn">？ 使用说明</button>
     </div>
     <div class="muted">
-      v1.2 重点修正：<b>拖拽反推结果更简单</b>，并且严格遵守“<b>不能连续每行都加针</b>，最密只能隔行加针（n≥2）”。
+      v1.2.1 修正拖拽初始状态：如果当前规则已经是最密的 <b>每2行+8</b>，拖拽模式会自动从“中间档”开始，给向内、向外都留出调整空间。
     </div>
 
     <div class="mode-switch">
@@ -226,6 +226,12 @@
       </div>
 
       <div class="btn-row">
+        <button class="action secondary" id="neutralPreset">自由拖拽起点</button>
+        <button class="action gray" id="loadCurrentRulesBtn">从当前规则开始</button>
+      </div>
+      <div class="subtle" id="dragStartNote" style="margin-top:6px;"></div>
+
+      <div class="btn-row">
         <button class="action secondary" id="straightPreset">直线</button>
         <button class="action secondary" id="outwardPreset">柔和外弯</button>
         <button class="action secondary" id="inwardPreset">柔和内弯</button>
@@ -280,11 +286,12 @@
 <div class="modal-bg" id="helpModal" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <div class="modal-head">
-      <h2 id="helpTitle">v1.2 使用说明</h2>
+      <h2 id="helpTitle">v1.2.1 使用说明</h2>
       <button class="close" id="closeHelp">×</button>
     </div>
     <div class="modal-body">
       <div class="callout">
+        <b>v1.2.1 额外修正：</b>如果规则是每2行+8，它本身已经是允许的最大加针频率，因此没有再往外拖的空间。拖拽模式现在会自动从约每4行+8的中间档开始。<br><br>
         <b>v1.2 的核心变化：</b><br>
         1）拖拽反推结果不再主要给一长串“第几行加针”；<br>
         2）而是尽量整理成你们熟悉的规则格式：<code>起始行-结束行:每n行加一次</code>；<br>
@@ -348,6 +355,7 @@
   let activeDrag = null;
   let lastReverseRuleText = "";
   let lastReverseRuleNote = "";
+  let dragStartNote = "";
 
   function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
   function num(id,f=0){ const v=Number($(id).value); return Number.isFinite(v)?v:f; }
@@ -505,6 +513,35 @@
     controlGroups[0]=0;
   }
 
+  function setNeutralDragControls(){
+    const p=getParams();
+    controlRows=buildControlRows(p.totalRows);
+    // 中间档：近似“每4行+8”，因为最密“每2行+8”正好还有一倍向外空间
+    const sched=scheduleFromRules(p.totalRows,[{start:1,end:p.totalRows,every:4}]);
+    controlGroups=controlRows.map(r=>Math.min(sched.groups[r]||0,maxGroupsForControlRow(r)));
+    controlGroups[0]=0;
+    dragStartNote="当前使用自由拖拽起点（约每4行+8），向外最多可拖到每2行+8，向内则可继续变稀。";
+  }
+
+  function initDragControlsSmart(){
+    const p=getParams();
+    const parsed=parseRules($("rules").value.trim());
+    if(parsed.errors.length){
+      setNeutralDragControls();
+      return;
+    }
+    const sched=scheduleFromRules(p.totalRows,parsed.rules);
+    const maximum=Math.max(1,maxGroupsForControlRow(p.totalRows));
+    const saturation=(sched.groups[p.totalRows]||0)/maximum;
+    if(saturation>=0.90){
+      setNeutralDragControls();
+      dragStartNote="你当前的规则接近/已经达到最密的每2行+8，所以若原样载入只能往里拖。这里已自动改用自由拖拽起点；若想忠实载入原规则，请点“从当前规则开始”。";
+    }else{
+      ensureControlsFromCurrentRules(true);
+      dragStartNote="已从当前规则载入，橙色点可以在实际允许范围内向内或向外调整。";
+    }
+  }
+
   function setControlGroup(i,v){
     v = Math.round(v);
     if(i===0) v=0;
@@ -634,6 +671,7 @@
        平均大约：<b>${avg}</b> 行加一次　｜　与目标弧度的最大差异：<b>${schedule.fitError.toFixed(2)}</b> 组`;
     $("reverseRulesText").textContent = lastReverseRuleText;
     $("reverseRulesNote").textContent = lastReverseRuleNote;
+    $("dragStartNote").textContent = dragStartNote;
   }
 
   function renderControlEditor(){
@@ -895,7 +933,7 @@
 
   function switchMode(next){
     if(next===mode) return;
-    if(next==="drag") ensureControlsFromCurrentRules(true);
+    if(next==="drag") initDragControlsSmart();
     mode=next;
     $("ruleModeBtn").classList.toggle("active",mode==="rule");
     $("dragModeBtn").classList.toggle("active",mode==="drag");
@@ -903,7 +941,7 @@
     $("dragSection").hidden=mode!=="drag";
     $("modeTip").innerHTML = mode==="rule"
       ? `当前是 <b>规则输入模式</b>：输入“每几行加一次”，程序计算插肩线。`
-      : `<span class="drag-badge">拖拽设计已开启</span>　先拖图，再直接看“反推结果”；程序会自动保证 n ≥ 2。`;
+      : `<span class="drag-badge">拖拽设计已开启</span>　默认会给内外两个方向都留出拖动空间；程序始终保证 n ≥ 2。`;
     render();
   }
 
@@ -911,18 +949,19 @@
     const p=getParams();
     controlRows=buildControlRows(p.totalRows);
     const max=ceilHalf(p.totalRows);
+    const designMax=Math.max(1,Math.round(max*0.62));
     const t=controlRows.map(r=>r/p.totalRows);
 
     if(type==="straight"){
-      controlGroups=t.map(x=>Math.round(max*x));
+      controlGroups=t.map(x=>Math.round(designMax*x));
     }else if(type==="outward"){
-      controlGroups=t.map(x=>Math.round(max*Math.pow(x,1.55)));
+      controlGroups=t.map(x=>Math.round(designMax*Math.pow(x,1.55)));
     }else if(type==="inward"){
-      controlGroups=t.map(x=>Math.round(max*Math.pow(x,.62)));
+      controlGroups=t.map(x=>Math.round(designMax*Math.pow(x,.62)));
     }else if(type==="irregular"){
       controlGroups=t.map((x,i)=>{
         const wobble=[0,-.03,.07,-.04,.06,0][i]||0;
-        return Math.round(max*clamp(Math.pow(x,1.05)+wobble,0,1));
+        return Math.round(designMax*clamp(Math.pow(x,1.05)+wobble,0,1));
       });
     }
 
@@ -1019,6 +1058,21 @@
     }
   });
 
+  $("neutralPreset").addEventListener("click", ()=>{
+    setNeutralDragControls();
+    render();
+  });
+  $("loadCurrentRulesBtn").addEventListener("click", ()=>{
+    ensureControlsFromCurrentRules(true);
+    const p=getParams();
+    const max=Math.max(1,maxGroupsForControlRow(p.totalRows));
+    const end=controlGroups.at(-1)||0;
+    dragStartNote = end/max>=0.90
+      ? "已忠实载入当前规则。它已经接近最密的每2行+8，因此橙色点基本只能往里拖，这是实际编织上限，不是程序故障。"
+      : "已忠实载入当前规则，可以在实际允许范围内继续调整。";
+    render();
+  });
+
   $("straightPreset").addEventListener("click", ()=>applyPreset("straight"));
   $("outwardPreset").addEventListener("click", ()=>applyPreset("outward"));
   $("inwardPreset").addEventListener("click", ()=>applyPreset("inward"));
@@ -1029,7 +1083,7 @@
     $("rowGauge").value=32; $("totalRows").value=80; $("curveScale").value=1;
     $("neckWidth").value=16; $("neckHeight").value=6; $("rules").value="1-80:2";
     $("shortRowsExtra").value=6; $("shortRowsWidth").value=.72; $("frontFlatRatio").value=.25; $("frontFlatScale").value=1;
-    controlRows=[]; controlGroups=[]; mode="rule";
+    controlRows=[]; controlGroups=[]; dragStartNote=""; mode="rule";
     $("ruleModeBtn").classList.add("active"); $("dragModeBtn").classList.remove("active");
     $("ruleSection").hidden=false; $("dragSection").hidden=true;
     $("modeTip").innerHTML=`当前是 <b>规则输入模式</b>：输入“每几行加一次”，程序计算插肩线。`;
@@ -1042,7 +1096,7 @@
   ].forEach(id => $(id).addEventListener("change", render));
 
   $("totalRows").addEventListener("change", ()=>{
-    if(mode==="drag") ensureControlsFromCurrentRules(true);
+    if(mode==="drag") initDragControlsSmart();
     render();
   });
   $("rules").addEventListener("change", ()=>{ if(mode==="rule") render(); });
