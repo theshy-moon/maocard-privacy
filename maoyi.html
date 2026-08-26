@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>插肩毛衣曲线设计器 v1.3</title>
+  <title>插肩毛衣曲线设计器 v2</title>
   <style>
     * { box-sizing: border-box; }
     :root {
@@ -108,6 +108,24 @@
       font-family:Consolas, monospace; font-size:13px; white-space:pre-wrap; line-height:1.6;
     }
     .subtle { color:#6b7280; font-size:12px; line-height:1.6; }
+    .short-summary {
+      margin-top:10px; padding:11px 12px; border-radius:11px; background:#eff6ff;
+      border:1px solid #bfdbfe; color:#1e3a8a; font-size:13px; line-height:1.65;
+    }
+    .short-table-wrap {
+      margin-top:10px; overflow-x:auto; border:1px solid #e5e7eb; border-radius:10px; background:#fff;
+    }
+    table.short-table { border-collapse:collapse; width:100%; min-width:610px; font-size:12px; }
+    .short-table th,.short-table td {
+      border-bottom:1px solid #e5e7eb; padding:8px 9px; text-align:left; vertical-align:top; white-space:nowrap;
+    }
+    .short-table th { background:#f8fafc; color:#4b5563; font-weight:750; }
+    .short-table tr:last-child td { border-bottom:none; }
+    .short-table .strong { font-weight:750; color:#111827; }
+    .warning-box {
+      margin-top:8px; padding:8px 10px; border-radius:8px; background:#fff7ed; color:#9a3412;
+      font-size:12px; line-height:1.6;
+    }
     .inline-note {
       display:inline-block; font-size:11px; color:#6b7280; margin-left:6px;
     }
@@ -156,11 +174,11 @@
 <div class="app">
   <aside class="panel">
     <div class="title-row">
-      <h1>插肩毛衣曲线设计器 v1.3</h1>
+      <h1>插肩毛衣曲线设计器 v2</h1>
       <button class="help" id="helpBtn">？ 使用说明</button>
     </div>
     <div class="muted">
-      v1.3 新增“规则拟合”：拖出喜欢的弧度后，程序会自动用尽量少的几段 <b>每 n 行 +8</b> 来逼近它，并始终保证 <b>n ≥ 2</b>。
+      v2 新增真正的<b>逐层引返模拟</b>：每一层都从前片一侧出发，依次经过四条插肩线、两袖和后片，再进入另一侧前片后转身；下一行反向织回。
     </div>
 
     <div class="mode-switch">
@@ -251,18 +269,66 @@
       </div>
     </section>
 
-    <h2>引返 / 前后落差示意</h2>
-    <div class="grid2">
-      <div class="field"><label>引返最大额外行数</label><input id="shortRowsExtra" type="number" min="0" max="80" step="1" value="6"></div>
-      <div class="field"><label>引返包裹范围（0~1）</label><input id="shortRowsWidth" type="number" min="0.1" max="1" step="0.05" value="0.72"></div>
-      <div class="field"><label>前片中间平段比例（0~0.5）</label><input id="frontFlatRatio" type="number" min="0" max="0.5" step="0.05" value="0.25"></div>
-      <div class="field"><label>前片平段显示缩放</label><input id="frontFlatScale" type="number" min="0.6" max="1.6" step="0.05" value="1.0"></div>
-    </div>
-    <div class="muted">
-      蓝色环状示意表示：引返路径会经过四条加针线，并延伸到前片两侧；前片最中间保留一小段平段。<br>
-      可拖拽：<b>蓝色上方圆点</b>改落差，<b>蓝色右上圆点</b>改包裹范围，<b>蓝色前片右端圆点</b>改前片平段比例。
+    <h2>引返 v2：逐层模拟</h2>
+    <div class="small-box">
+      <strong>这里现在不是“画一条蓝色椭圆”了。</strong><br>
+      程序会真正生成一层一层的引返路径：每层包含 <b>2 行</b>（左右各转身一次），
+      每一趟都会经过 <b>4 条插肩线</b>，并进入前片两侧；随着层数增加，转身点逐渐向前片中间推进。
     </div>
 
+    <div class="grid2" style="margin-top:10px;">
+      <div class="field">
+        <label>引返开始行</label>
+        <input id="shortRowStart" type="number" min="1" max="300" step="1" value="1">
+      </div>
+      <div class="field">
+        <label>引返层数 <span class="inline-note">1层 = 2行</span></label>
+        <input id="shortRowLayers" type="number" min="1" max="30" step="1" value="6">
+      </div>
+      <div class="field">
+        <label>第1层每侧进入前片（针）</label>
+        <input id="shortRowFirstAdvance" type="number" min="0" max="100" step="1" value="2">
+      </div>
+      <div class="field">
+        <label>最终前片中间保留比例</label>
+        <input id="frontFlatRatio" type="number" min="0" max="0.5" step="0.05" value="0.25">
+      </div>
+      <div class="field" style="grid-column:1 / -1;">
+        <label>每层向前推进的节奏</label>
+        <select id="shortRowTempo">
+          <option value="uniform" selected>均匀：每层增加量尽量接近</option>
+          <option value="slowfast">先慢后快：前几层少推进，后几层多推进</option>
+          <option value="fastslow">先快后慢：前几层多推进，后几层逐渐放缓</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="checkline">
+      <input id="showShortRows" type="checkbox" checked>
+      <label for="showShortRows">显示每一层蓝色引返路径</label>
+    </div>
+
+    <div class="short-summary" id="shortRowSummary"></div>
+    <div class="short-table-wrap">
+      <table class="short-table">
+        <thead>
+          <tr>
+            <th>引返层</th>
+            <th>对应育克行</th>
+            <th>每侧进入前片</th>
+            <th>前片中间暂不织</th>
+            <th>这2行里的插肩加针</th>
+          </tr>
+        </thead>
+        <tbody id="shortRowTableBody"></tbody>
+      </table>
+    </div>
+    <div class="warning-box" id="shortRowWarning" hidden></div>
+
+    <div class="muted" style="margin-top:8px;">
+      <b>怎么读：</b>例如“第3层 / 第5~6行 / 每侧进入前片 8 针”，表示这两行分别向左右两侧往返，
+      都会穿过四条插肩线；转身点已经进入前片 8 针。蓝色路径与红色插肩线的交点，就是这一层实际途经插肩线的位置。
+    </div>
     <div class="checkline"><input id="showPoints" type="checkbox" checked><label for="showPoints">显示加针行标记点</label></div>
     <div class="checkline"><input id="showTarget" type="checkbox" checked><label for="showTarget">拖拽模式显示“目标曲线”虚线</label></div>
 
@@ -274,7 +340,7 @@
     <div class="error" id="errorBox"></div>
     <div class="footer">
       红线是“按真实可执行加针规则量化后的插肩线”；青色虚线是理想目标弧线；
-      蓝色环状示意表示引返路径/前后落差的分布范围，不是逐针精确引返图。
+      蓝色线现在表示真实的逐层引返范围：每层对应2行、左右各一次转身，并在图上穿过四条插肩线。
     </div>
   </aside>
 
@@ -285,7 +351,7 @@
         <span><i class="sw" style="background:#dc2626"></i>实际可织插肩线</span>
         <span><i class="sw" style="background:#0891b2"></i>拖拽目标曲线</span>
         <span><i class="sw" style="background:#ea580c"></i>可拖控制点</span>
-        <span><i class="sw" style="background:#2563eb"></i>引返路径 / 前后落差示意</span>
+        <span><i class="sw" style="background:#2563eb"></i>逐层引返路径</span>
         <span><i class="sw" style="background:#7c3aed"></i>加针行</span>
       </div>
     </section>
@@ -298,69 +364,117 @@
 <div class="modal-bg" id="helpModal" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <div class="modal-head">
-      <h2 id="helpTitle">v1.3 使用说明</h2>
+      <h2 id="helpTitle">v2 使用说明</h2>
       <button class="close" id="closeHelp">×</button>
     </div>
     <div class="modal-body">
       <div class="callout">
-        <b>v1.3 的核心变化：</b><br>
-        1）拖拽后不再把离散加针点机械地拆成很多小段，而是主动寻找<b>少量、容易照着织的规则段</b>；<br>
-        2）可以选择“简洁 / 平衡 / 精细”三种拟合方式；<br>
-        3）结果仍统一写成 <code>起始行-结束行:每n行加一次</code>，并严格保证 <b>n ≥ 2</b>；<br>
-        4）拖拽起点仍会避开“每2行+8”的最外极限，让内外两个方向都能调整。
+        <b>v2 的核心：</b><br>
+        插肩线部分继续保留 v1.3 的“规则输入 ↔ 拖拽反推”；同时把原来只是示意的蓝色引返升级成了
+        <b>真正的逐层往返模型</b>。每层按 2 行计算，左右各转身一次，每一趟都会经过四条插肩线。
       </div>
 
-      <h3>一、推荐使用流程</h3>
+      <h3>一、最推荐的使用顺序</h3>
       <ol>
-        <li>先填总起针数、横密、纵密、育克总行数。</li>
-        <li>如果你已经知道方案，用 <b>规则输入</b>。</li>
-        <li>如果你只想“先看弧度好不好看”，切到 <b>拖拽设计</b>。</li>
-        <li>在拖拽设计里，直接拖图中的橙色点，不用先管下面的高级数字。</li>
-        <li>满意后，选择“简洁 / 平衡 / 精细”，再直接看“反推结果”里的少量规则段即可。</li>
+        <li>先填写总起针数、横密、纵密和育克总行数。</li>
+        <li>先设计红色插肩线：知道规则就用“规则输入”；只想找好看的弧度就用“拖拽设计”。</li>
+        <li>红线确定后，再设置“引返 v2”。</li>
+        <li>重点观察蓝色一层层的路径、前片中央剩余针数，以及下方逐层表格。</li>
       </ol>
 
-      <h3>二、拖拽设计里最重要的东西是什么？</h3>
-      <ul>
-        <li><b>橙色点：</b>拖这个，改四条插肩线的弧度。</li>
-        <li><b>蓝色点：</b>拖这个，改引返/前后落差示意。</li>
-        <li><b>反推结果：</b>把你拖出来的弧度，自动拟合成少量“第几行到第几行，每几行加一次”的规则。</li>
-      </ul>
-
-      <h3>三、为什么还会有“高级数字微调”？</h3>
-      <p>
-        这是给想精细控制的人用的。它的意思是：
-        <b>织到某一行时，前面累计已经做了多少次“+8”</b>。
-        例如“16 行，累计 8 次”，就是到第 16 行为止，一共已经做了 8 次加针。
-      </p>
-      <p>如果你朋友看不懂这块，可以完全不展开，直接靠拖图就行。</p>
-
-      <h3>四、拖拽反推结果为什么不一定完全等于目标弧线？</h3>
-      <p>
-        因为真正编织是离散的，不可能连续变化。程序会在尽量贴近目标弧度的前提下，生成满足实际编织约束的规则，
-        尤其会强制满足：<b>最密只能每 2 行加一次，不能连续每行都加</b>。
-      </p>
-
-      <h3>五、规则输入格式</h3>
+      <h3>二、红色插肩线怎么设计？</h3>
+      <p><b>规则输入模式</b>使用：</p>
       <div class="example">1-20:4
 21-50:3
 51-90:2</div>
-      <p>表示前 20 行每 4 行加一次，中间每 3 行加一次，后面每 2 行加一次。</p>
+      <p>
+        表示对应行段内分别每4行、每3行、每2行进行一次总 +8 针。
+        底层规则始终是 <b>n ≥ 2</b>，不能连续每行加针。
+      </p>
+      <p>
+        <b>拖拽设计模式</b>则直接拖橙色点。青色虚线是你想要的连续目标弧线，
+        红色实线是程序拟合成真实可织规则后的结果。
+      </p>
 
-      <h3>六、简洁 / 平衡 / 精细有什么区别？</h3>
+      <h3>三、“简洁 / 平衡 / 精细”反推有什么区别？</h3>
       <ul>
-        <li><b>简洁：</b>最多 2 段。优先得到最容易记、最容易照着织的方案。</li>
-        <li><b>平衡：</b>最多 3 段。通常已经能保留明显的弧度变化，推荐日常使用。</li>
-        <li><b>精细：</b>最多 5 段。更贴近拖出来的目标弧线，但规则会稍微复杂。</li>
+        <li><b>简洁：</b>最多 2 段规则，最容易照着织。</li>
+        <li><b>平衡：</b>最多 3 段，推荐。</li>
+        <li><b>精细：</b>最多 5 段，更贴近拖出的曲线。</li>
       </ul>
+      <p>程序不会为了凑段数强行分段，并且所有反推规则都会保证 n ≥ 2。</p>
+
+      <h3>四、v2 的“引返层”到底是什么？</h3>
       <p>
-        程序并不会为了凑满段数而强行分段：如果一条直线用 1 段就足够，它仍然只会输出 1 段。
+        为了让模型直观且对称，v2 把一次完整的左右往返定义成 <b>1 层 = 2 行</b>：
+      </p>
+      <ol>
+        <li>第1行从一侧前片转身点出发，经过该侧插肩线、袖子、后片、另一只袖子以及另一侧插肩线，进入另一侧前片后转身。</li>
+        <li>第2行反方向织回来，并在另一侧前片的对应位置转身。</li>
+      </ol>
+      <p>
+        因此每一层的蓝色路径都会经过 <b>4 条插肩线</b>。下一层的转身点继续向前片中央推进，
+        前片中间暂时没有织到的平段就会逐渐变窄。
       </p>
 
-      <h3>七、引返示意怎么理解？</h3>
+      <h3>五、引返参数分别是什么意思？</h3>
+      <table class="help-table">
+        <tr><th>参数</th><th>含义</th></tr>
+        <tr>
+          <td>引返开始行</td>
+          <td>从育克的第几行开始做引返。第1层占“开始行”和下一行。</td>
+        </tr>
+        <tr>
+          <td>引返层数</td>
+          <td>一共做多少层。每层按2行计算，所以6层约等于后片中央比前片中央多12行。</td>
+        </tr>
+        <tr>
+          <td>第1层每侧进入前片</td>
+          <td>第一层从插肩线进入前片多少针后转身。后续层会继续往前片中央推进。</td>
+        </tr>
+        <tr>
+          <td>最终前片中间保留比例</td>
+          <td>最后一层结束时，前片中央仍然没有参与这些引返的部分占前片约多少。默认0.25就是约四分之一。</td>
+        </tr>
+        <tr>
+          <td>推进节奏</td>
+          <td>决定每一层转身点怎样向前推进：均匀、先慢后快、或先快后慢。</td>
+        </tr>
+      </table>
+
+      <h3>六、下面的逐层表格怎么看？</h3>
+      <p>例如：</p>
+      <div class="example">第3层 ｜ 第5~6行 ｜ 每侧进入前片 8针 ｜ 前片中间暂不织 24针 ｜ 第5行+8</div>
       <p>
-        蓝色环状示意表示“前后落差”的作用范围：它从后片开始，沿着两袖和前片两侧延伸，并在前片中间保留一段平段。
-        当前版本主要做几何示意，不是逐次转身的精确引返针法图。
+        意思是：这一层用了第5、6两行，左右各做一次转身；两边转身点都已经进入前片8针；
+        前片最中间还有24针暂时不参加这层引返。如果这两行中某一行正好是插肩加针行，表格也会标出来。
       </p>
+
+      <h3>七、蓝色路径和红色插肩线为什么会相交？</h3>
+      <p>
+        这是刻意的。你朋友确认的织法里，引返每一趟都会途经四条插肩线，所以 v2 会按该层所在的育克行，
+        找到四条红色插肩线的真实位置，再让蓝色引返路径逐一穿过它们。
+      </p>
+
+      <h3>八、“后领落差”现在怎么算？</h3>
+      <p>
+        v2 不再让你手填一个抽象的“额外行数”。因为 1 层就是 2 行，所以：
+      </p>
+      <div class="example">后片中央相对前片中央的理论最大额外行数 ≈ 引返层数 × 2</div>
+      <p>
+        程序再结合纵密把它换算成厘米显示。这个值描述几何上的行差，不包含洗后伸缩、线材弹性等物理效应。
+      </p>
+
+      <h3>九、v2 目前没有模拟什么？</h3>
+      <p>
+        v2 模拟的是“转身范围和行数结构”，暂时不绑定某一种具体转身技法，例如德式引返、Wrap & Turn 等。
+        不同技法在转身针本身的处理上不同，但“这一趟织到哪里、经过哪些插肩线、前片中间剩多少”这一层级的几何逻辑可以共用。
+      </p>
+
+      <div class="callout">
+        <b>注意：</b>这仍然是几何/针数设计工具，不是纱线力学仿真。真实成衣还受线材、针号、手劲、花样和下水影响。
+      </div>
+    </div>
     </div>
   </div>
 </div>
@@ -393,10 +507,12 @@
       curveScale: clamp(num("curveScale",1),.6,1.5),
       neckWidth: Math.max(1,num("neckWidth",16)),
       neckHeight: Math.max(1,num("neckHeight",6)),
-      shortRowsExtra: clamp(Math.round(num("shortRowsExtra",6)),0,80),
-      shortRowsWidth: clamp(num("shortRowsWidth",.72),0.1,1),
+      shortRowStart: clamp(Math.round(num("shortRowStart",1)),1,300),
+      shortRowLayers: clamp(Math.round(num("shortRowLayers",6)),1,30),
+      shortRowFirstAdvance: clamp(Math.round(num("shortRowFirstAdvance",2)),0,100),
       frontFlatRatio: clamp(num("frontFlatRatio",.25),0,0.5),
-      frontFlatScale: clamp(num("frontFlatScale",1),0.6,1.6),
+      shortRowTempo: $("shortRowTempo").value || "uniform",
+      showShortRows: $("showShortRows").checked,
       showPoints: $("showPoints").checked,
       showTarget: $("showTarget").checked
     };
@@ -787,6 +903,136 @@
     return {split,stitchW,rowH,rows};
   }
 
+  function shortTempoProgress(t,tempo){
+    if(tempo==="slowfast") return Math.pow(t,1.55);
+    if(tempo==="fastslow") return Math.pow(t,.65);
+    return t;
+  }
+
+  function generateShortRowPlan(sim,p){
+    const errors=[], warnings=[], layers=[];
+    const start=p.shortRowStart;
+    const count=p.shortRowLayers;
+    const finalEnd=start + count*2 - 1;
+
+    if(start<1 || start>p.totalRows){
+      errors.push(`引返开始行必须在 1~${p.totalRows} 行之间。`);
+      return {errors,warnings,layers,extraRows:0,dropCm:0,finalFlat:0,finalFlatRatio:0};
+    }
+    if(finalEnd>p.totalRows){
+      errors.push(`当前设置需要织到第 ${finalEnd} 行，但育克总行数只有 ${p.totalRows} 行。请减少引返层数、提前开始，或增加育克总行数。`);
+      return {errors,warnings,layers,extraRows:count*2,dropCm:count*2*sim.rowH,finalFlat:0,finalFlatRatio:0};
+    }
+
+    const finalFront=sim.rows[finalEnd].front;
+    const desiredFlat=Math.max(0,Math.round(finalFront*p.frontFlatRatio));
+    const finalAdvanceMax=Math.max(0,Math.floor((finalFront-desiredFlat)/2));
+    let first=Math.min(p.shortRowFirstAdvance,finalAdvanceMax);
+
+    if(p.shortRowFirstAdvance>finalAdvanceMax){
+      warnings.push(`第1层进入前片的针数已自动从 ${p.shortRowFirstAdvance} 针限制为 ${finalAdvanceMax} 针，避免越过前片中央。`);
+    }
+
+    let prev=0;
+    for(let i=0;i<count;i++){
+      const rowStart=start+i*2;
+      const rowEnd=rowStart+1;
+      const currentFront=sim.rows[rowEnd].front;
+      const maxCurrent=Math.max(0,Math.floor((currentFront-1)/2));
+
+      const t=count===1 ? 1 : i/(count-1);
+      let adv;
+      if(count===1){
+        adv=Math.min(finalAdvanceMax,maxCurrent);
+      }else{
+        const f=shortTempoProgress(t,p.shortRowTempo);
+        adv=Math.round(first+(finalAdvanceMax-first)*f);
+      }
+
+      // 尽量保证下一层比上一层更往前，但不能越过前片中央。
+      if(i>0 && finalAdvanceMax>first){
+        adv=Math.max(adv,Math.min(prev+1,finalAdvanceMax));
+      }
+      adv=clamp(adv,0,Math.min(finalAdvanceMax,maxCurrent));
+      if(adv<prev) adv=prev;
+      prev=adv;
+
+      const centerUnworked=Math.max(0,currentFront-2*adv);
+      const incRows=[];
+      for(let r=rowStart;r<=rowEnd;r++){
+        if(sim.rows[r] && sim.rows[r].isIncRow) incRows.push(r);
+      }
+
+      layers.push({
+        index:i+1,
+        rowStart,rowEnd,
+        pathRow:rowEnd,
+        advance:adv,
+        frontStitches:currentFront,
+        centerUnworked,
+        incRows
+      });
+    }
+
+    // 如果层数太多而可推进针数太少，会出现相邻层转身点相同。
+    for(let i=1;i<layers.length;i++){
+      if(layers[i].advance===layers[i-1].advance){
+        warnings.push("部分相邻引返层的转身点相同：当前层数较多、但前片可推进针数较少。实际编织时可考虑减少层数或减小前片平段比例。");
+        break;
+      }
+    }
+
+    const last=layers[layers.length-1];
+    return {
+      errors,warnings,layers,
+      extraRows:count*2,
+      dropCm:count*2*sim.rowH,
+      finalFlat:last ? last.centerUnworked : 0,
+      finalFlatRatio:last && last.frontStitches ? last.centerUnworked/last.frontStitches : 0
+    };
+  }
+
+  function renderShortRowPlan(plan,p){
+    const summary=$("shortRowSummary");
+    const body=$("shortRowTableBody");
+    const warn=$("shortRowWarning");
+
+    if(plan.errors.length){
+      summary.innerHTML=`<b>引返参数暂不可用：</b>${plan.errors.join(" ")}`;
+      body.innerHTML="";
+      warn.hidden=true;
+      return;
+    }
+
+    summary.innerHTML =
+      `<b>${p.shortRowLayers} 层 = ${plan.extraRows} 行引返</b><br>
+       后片中央相对前片中央的理论最大行差约 <b>${plan.extraRows} 行</b>
+       ≈ <b>${plan.dropCm.toFixed(2)} cm</b>（按当前纵密换算）<br>
+       最后一层前片中央暂不织：<b>${plan.finalFlat} 针</b>
+       ≈ 前片的 <b>${(plan.finalFlatRatio*100).toFixed(1)}%</b>`;
+
+    body.innerHTML=plan.layers.map(layer=>{
+      const inc=layer.incRows.length
+        ? layer.incRows.map(r=>`第${r}行 +8`).join("、")
+        : "无";
+      return `<tr>
+        <td class="strong">第 ${layer.index} 层</td>
+        <td>第 ${layer.rowStart}~${layer.rowEnd} 行</td>
+        <td>${layer.advance} 针 / 每侧</td>
+        <td>${layer.centerUnworked} 针</td>
+        <td>${inc}</td>
+      </tr>`;
+    }).join("");
+
+    if(plan.warnings.length){
+      warn.hidden=false;
+      warn.textContent=plan.warnings.join(" ");
+    }else{
+      warn.hidden=true;
+      warn.textContent="";
+    }
+  }
+
   function shapeText(schedule){
     if(schedule.incRows.length<2) return "加针较少，暂不判断";
     const gaps=[];
@@ -802,7 +1048,7 @@
 
   function stat(k,v){ return `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
 
-  function renderStats(sim,p,schedule){
+  function renderStats(sim,p,schedule,shortPlan){
     const end=sim.rows[sim.rows.length-1];
     const avg=schedule.incRows.length ? (p.totalRows/schedule.incRows.length).toFixed(2) : "—";
     $("stats").innerHTML = [
@@ -811,7 +1057,9 @@
       stat("左右袖", `${end.leftSleeve} / ${end.rightSleeve}`),
       stat("育克深度", `${end.depthCm.toFixed(2)} cm`),
       stat("平均加针间隔", schedule.incRows.length ? `${avg} 行` : "无加针"),
-      stat("插肩线趋势", shapeText(schedule))
+      stat("插肩线趋势", shapeText(schedule)),
+      stat("引返层数", shortPlan && !shortPlan.errors.length ? `${p.shortRowLayers} 层 / ${shortPlan.extraRows} 行` : "参数需调整"),
+      stat("理论前后行差", shortPlan && !shortPlan.errors.length ? `${shortPlan.dropCm.toFixed(2)} cm` : "—")
     ].join("");
   }
 
@@ -881,87 +1129,91 @@
     return d;
   }
 
-  function drawShortRowLoop(st,p){
-    const {cx,cy,rx,ry,scale,rowH} = st;
-    const extraLift = p.shortRowsExtra * rowH * scale * 0.95;
-    const wrap = p.shortRowsWidth;
-    const flatRatio = p.frontFlatRatio;
-    const flatScale = p.frontFlatScale;
+  function shortRowPathD(layer,actualSets,cx){
+    const r=layer.pathRow;
+    const tl=actualSets[0][r], tr=actualSets[1][r], bl=actualSets[2][r], br=actualSets[3][r];
+    if(!tl || !tr || !bl || !br) return null;
 
-    const phi = 16 + 52 * flatRatio * flatScale;
-    const startA = 90 + phi;
-    const endA = 450 - phi;
+    const frontSpan=Math.max(1,br.x-bl.x);
+    const ratio=clamp(layer.advance/Math.max(1,layer.frontStitches),0,.49);
+    const leftEnd={
+      x:bl.x+frontSpan*ratio,
+      y:bl.y+(br.y-bl.y)*ratio
+    };
+    const rightEnd={
+      x:br.x-frontSpan*ratio,
+      y:br.y-(br.y-bl.y)*ratio
+    };
 
-    const radialBase = (8 + 16 * wrap) * scale * 0.65;
-    const sideExtra = extraLift * (0.18 + 0.30 * wrap);
+    const leftMid={x:(tl.x+bl.x)/2,y:(tl.y+bl.y)/2};
+    const rightMid={x:(tr.x+br.x)/2,y:(tr.y+br.y)/2};
+    const sideBulge=Math.max(20,Math.abs(bl.x-tl.x)*.36+18);
+    const leftSleeve={x:leftMid.x-sideBulge,y:leftMid.y};
+    const rightSleeve={x:rightMid.x+sideBulge,y:rightMid.y};
+    const backCenter={x:cx,y:Math.min(tl.y,tr.y)-Math.max(18,Math.abs(tr.x-tl.x)*.08)};
 
-    const outerPts = [];
-    for(let a=startA; a<=endA; a+=3){
-      const rad = a*Math.PI/180;
-      const u = Math.cos(rad), v = Math.sin(rad);
+    const d=[
+      `M ${leftEnd.x} ${leftEnd.y}`,
+      `L ${bl.x} ${bl.y}`,
+      `Q ${leftSleeve.x} ${leftSleeve.y} ${tl.x} ${tl.y}`,
+      `Q ${backCenter.x} ${backCenter.y} ${tr.x} ${tr.y}`,
+      `Q ${rightSleeve.x} ${rightSleeve.y} ${br.x} ${br.y}`,
+      `L ${rightEnd.x} ${rightEnd.y}`
+    ].join(" ");
 
-      const backDist = Math.abs((((a - 270) % 360) + 540) % 360 - 180);
-      const t = clamp(1 - backDist / (180 - phi), 0, 1);
-      const profile = Math.pow(t, 1.25);
+    return {d,tl,tr,bl,br,leftEnd,rightEnd,backCenter};
+  }
 
-      const radialOff = radialBase + sideExtra * (0.35 + 0.65*profile);
-      const yLift = extraLift * profile;
+  function drawShortRowsV2(plan,actualSets,p,cx){
+    if(!p.showShortRows || !plan || plan.errors.length || !plan.layers.length) return null;
 
-      const x = cx + (rx + radialOff) * u;
-      const y = cy + (ry + radialOff*0.55) * v - yLift;
-      outerPts.push({x,y,a});
+    let lastGeom=null;
+    plan.layers.forEach((layer,i)=>{
+      const g=shortRowPathD(layer,actualSets,cx);
+      if(!g) return;
+      lastGeom=g;
+
+      const opacity=.30 + .55*((i+1)/plan.layers.length);
+      const width=i===plan.layers.length-1 ? 3.4 : 2.1;
+
+      svg.appendChild(el("path",{
+        d:g.d,
+        fill:"none",
+        stroke:"#2563eb",
+        "stroke-width":width,
+        opacity:opacity,
+        "stroke-linecap":"round",
+        "stroke-linejoin":"round"
+      }));
+
+      // 四个交点明确标出来，强调每层都途经四条插肩线。
+      [g.bl,g.tl,g.tr,g.br].forEach(pt=>{
+        svg.appendChild(el("circle",{
+          cx:pt.x,cy:pt.y,r:i===plan.layers.length-1?4.2:3.1,
+          fill:"#2563eb",stroke:"#ffffff","stroke-width":1.4,opacity:Math.min(1,opacity+.12)
+        }));
+      });
+
+      addText(g.leftEnd.x-8,g.leftEnd.y-7,`${layer.index}`,{
+        size:10,center:true,fill:"#1d4ed8",bold:true
+      });
+    });
+
+    if(lastGeom){
+      // 最后一层的前片中央未织平段
+      svg.appendChild(el("line",{
+        x1:lastGeom.leftEnd.x,y1:lastGeom.leftEnd.y,
+        x2:lastGeom.rightEnd.x,y2:lastGeom.rightEnd.y,
+        stroke:"#93c5fd","stroke-width":1.8,"stroke-dasharray":"6 5"
+      }));
+      addText(
+        (lastGeom.leftEnd.x+lastGeom.rightEnd.x)/2,
+        Math.max(lastGeom.leftEnd.y,lastGeom.rightEnd.y)+18,
+        `最后一层前片中间暂不织 ${plan.finalFlat} 针`,
+        {size:11,center:true,fill:"#1d4ed8",bold:true}
+      );
     }
-
-    const leftEnd = outerPts[0];
-    const rightEnd = outerPts[outerPts.length-1];
-    const flatY = Math.max(leftEnd.y, rightEnd.y) - 1.5*scale + 2*scale*flatRatio;
-
-    const flatPts = [
-      {x:rightEnd.x, y:rightEnd.y},
-      {x:cx + (rightEnd.x-cx)*0.44, y:flatY},
-      {x:cx - (rightEnd.x-cx)*0.44, y:flatY},
-      {x:leftEnd.x, y:leftEnd.y}
-    ];
-
-    const closedPts = outerPts.concat(flatPts);
-    svg.appendChild(el("path",{d:pathFrom(closedPts,true), fill:"rgba(37,99,235,0.10)", stroke:"none"}));
-    svg.appendChild(el("path",{d:pathFrom(outerPts,false), fill:"none", stroke:"#2563eb", "stroke-width":3.2}));
-    svg.appendChild(el("path",{
-      d:`M ${rightEnd.x} ${rightEnd.y} L ${flatPts[1].x} ${flatPts[1].y} L ${flatPts[2].x} ${flatPts[2].y} L ${leftEnd.x} ${leftEnd.y}`,
-      fill:"none", stroke:"#2563eb", "stroke-width":3.2
-    }));
-
-    svg.appendChild(el("path",{
-      d:`M ${ellipsePoint(cx,cy,rx,ry,startA).x} ${ellipsePoint(cx,cy,rx,ry,startA).y}
-         Q ${cx} ${cy-ry-4} ${ellipsePoint(cx,cy,rx,ry,450-phi).x} ${ellipsePoint(cx,cy,rx,ry,450-phi).y}
-         M ${ellipsePoint(cx,cy,rx,ry,450-phi).x} ${ellipsePoint(cx,cy,rx,ry,450-phi).y}
-         L ${flatPts[1].x} ${flatPts[1].y} L ${flatPts[2].x} ${flatPts[2].y}
-         L ${ellipsePoint(cx,cy,rx,ry,startA).x} ${ellipsePoint(cx,cy,rx,ry,startA).y}`,
-      fill:"none", stroke:"#93c5fd", "stroke-width":1.6, "stroke-dasharray":"6 5"
-    }));
-
-    addText(cx, cy - ry - extraLift - 16, "引返路径 / 前后落差", {size:12, center:true, fill:"#1d4ed8", bold:true});
-    addText(cx, flatY + 18, "前片平段", {size:11, center:true, fill:"#1d4ed8", bold:true});
-
-    const topHandle = outerPts.reduce((a,b)=>a.y<b.y?a:b);
-    const sideAngle = 330;
-    let sideHandle = outerPts.reduce((best,pnt)=>Math.abs(pnt.a-sideAngle)<Math.abs(best.a-sideAngle)?pnt:best, outerPts[0]);
-    const flatHandle = rightEnd;
-
-    svg.appendChild(el("circle",{
-      cx:topHandle.x, cy:topHandle.y, r:8, fill:"#2563eb", stroke:"#fff", "stroke-width":2,
-      cursor:"ns-resize", "data-short":"center"
-    }));
-    svg.appendChild(el("circle",{
-      cx:sideHandle.x, cy:sideHandle.y, r:7, fill:"#60a5fa", stroke:"#fff", "stroke-width":2,
-      cursor:"ew-resize", "data-short":"width"
-    }));
-    svg.appendChild(el("circle",{
-      cx:flatHandle.x, cy:flatHandle.y, r:7, fill:"#3b82f6", stroke:"#fff", "stroke-width":2,
-      cursor:"ew-resize", "data-short":"flat"
-    }));
-
-    return { topHandle, sideHandle, flatHandle };
+    return lastGeom;
   }
 
   function draw(sim,p,schedule){
@@ -969,17 +1221,14 @@
     const W=1000,H=760,cx=500,cy=380;
     const maxShiftCm = ceilHalf(p.totalRows)*sim.stitchW*p.curveScale;
     const maxDepthCm = p.totalRows*sim.rowH;
-    const maxShortCm = Math.max(p.shortRowsExtra,12)*sim.rowH;
-    const halfX = p.neckWidth/2 + maxShiftCm + 6;
-    const halfY = maxDepthCm + maxShortCm + p.neckHeight + 6;
+    const halfX = p.neckWidth/2 + maxShiftCm + 8;
+    const halfY = maxDepthCm + p.neckHeight + 10;
     const scale = Math.min((W/2-80)/halfX, (H/2-70)/halfY);
     const rx=(p.neckWidth/2)*scale, ry=(p.neckHeight/2)*scale;
 
-    const state = {cx,cy,rx,ry,scale,rowH:sim.rowH,p};
-
     svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"transparent"}));
     addText(24,34,mode==="drag"?"拖拽设计：先拖弧度，再看反推规则":"规则输入：输入规则，直接看插肩线",{size:21,bold:true});
-    addText(24,58,mode==="drag"?"橙色点控制插肩弧度；蓝色点控制引返示意":"修改左侧规则后点击“生成 / 更新”",{size:13,fill:"#6b7280"});
+    addText(24,58,mode==="drag"?"橙色点控制插肩弧度；蓝色多层线是实际引返范围":"蓝色多层线按当前引返参数逐层生成",{size:13,fill:"#6b7280"});
 
     svg.appendChild(el("line",{x1:cx,y1:18,x2:cx,y2:H-18,stroke:"#d1d5db","stroke-dasharray":"6 6"}));
     svg.appendChild(el("line",{x1:18,y1:cy,x2:W-18,y2:cy,stroke:"#e5e7eb","stroke-dasharray":"6 6"}));
@@ -1013,6 +1262,9 @@
          Q ${bl.x-65} ${cy} ${tl.x} ${tl.y} Z`,
       fill:"rgba(226,232,240,.45)", stroke:"#cbd5e1", "stroke-width":1.6
     }));
+
+    const shortPlan = generateShortRowPlan(sim,p);
+    drawShortRowsV2(shortPlan,actualSets,p,cx);
 
     if(mode==="drag" && p.showTarget){
       targetSets.forEach(arr=>svg.appendChild(el("path",{
@@ -1085,7 +1337,15 @@
     }
 
     const sim=simulate(p,schedule);
-    renderStats(sim,p,schedule);
+    const shortPlan=generateShortRowPlan(sim,p);
+
+    if(shortPlan.errors.length){
+      $("errorBox").textContent=shortPlan.errors.join("\n");
+    }
+
+    renderStats(sim,p,schedule,shortPlan);
+    renderShortRowPlan(shortPlan,p);
+
     if(mode==="drag"){
       renderControlEditor();
       renderReverseResult(p,schedule);
@@ -1139,10 +1399,6 @@
       activeDrag={type:"ctrl", index:+t.dataset.ctrl, line:+t.dataset.line, pointerId:e.pointerId};
       svg.setPointerCapture(e.pointerId);
       e.preventDefault();
-    }else if(t.dataset.short){
-      activeDrag={type:"short", which:t.dataset.short, pointerId:e.pointerId};
-      svg.setPointerCapture(e.pointerId);
-      e.preventDefault();
     }
   });
 
@@ -1161,32 +1417,6 @@
       const denom=Math.max(1e-9, st.sim.stitchW*st.scale*st.p.curveScale);
       setControlGroup(activeDrag.index, useful/denom);
       render();
-      return;
-    }
-
-    if(activeDrag.which==="center"){
-      const neckTop = st.cy - st.ry;
-      const lift = clamp(neckTop - q.y, 0, 2000);
-      const rows = Math.round(lift / Math.max(1e-9, st.sim.rowH * st.scale * 0.95));
-      $("shortRowsExtra").value = clamp(rows,0,80);
-      render();
-      return;
-    }
-
-    if(activeDrag.which==="width"){
-      const ratio = clamp((q.x - st.cx - st.rx*0.55) / Math.max(1e-9, st.rx*1.7), 0.1, 1);
-      $("shortRowsWidth").value = ratio.toFixed(2);
-      render();
-      return;
-    }
-
-    if(activeDrag.which==="flat"){
-      const s = clamp((q.x - st.cx) / Math.max(1e-9, st.rx), 0, 0.98);
-      const phiDeg = Math.asin(s) * 180 / Math.PI;
-      const ratio = clamp((phiDeg - 16) / (52 * Math.max(0.6, num("frontFlatScale",1))), 0, 0.5);
-      $("frontFlatRatio").value = ratio.toFixed(2);
-      render();
-      return;
     }
   });
 
@@ -1238,7 +1468,8 @@
     $("totalStitches").value=120; $("raglanWidth").value=2; $("stitchGauge").value=24;
     $("rowGauge").value=32; $("totalRows").value=80; $("curveScale").value=1;
     $("neckWidth").value=16; $("neckHeight").value=6; $("rules").value="1-80:2";
-    $("shortRowsExtra").value=6; $("shortRowsWidth").value=.72; $("frontFlatRatio").value=.25; $("frontFlatScale").value=1; $("fitMode").value="balanced";
+    $("shortRowStart").value=1; $("shortRowLayers").value=6; $("shortRowFirstAdvance").value=2;
+    $("frontFlatRatio").value=.25; $("shortRowTempo").value="uniform"; $("showShortRows").checked=true; $("fitMode").value="balanced";
     controlRows=[]; controlGroups=[]; dragStartNote=""; mode="rule";
     $("ruleModeBtn").classList.add("active"); $("dragModeBtn").classList.remove("active");
     $("ruleSection").hidden=false; $("dragSection").hidden=true;
@@ -1248,7 +1479,7 @@
 
   [
     "totalStitches","raglanWidth","stitchGauge","rowGauge","curveScale","neckWidth","neckHeight",
-    "shortRowsExtra","shortRowsWidth","frontFlatRatio","frontFlatScale","showPoints","showTarget","fitMode"
+    "shortRowStart","shortRowLayers","shortRowFirstAdvance","frontFlatRatio","shortRowTempo","showShortRows","showPoints","showTarget","fitMode"
   ].forEach(id => $(id).addEventListener("change", render));
 
   $("totalRows").addEventListener("change", ()=>{
