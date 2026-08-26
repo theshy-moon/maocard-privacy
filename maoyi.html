@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>插肩毛衣曲线设计器 v1.1</title>
+  <title>插肩毛衣曲线设计器 v1.2</title>
   <style>
     * { box-sizing: border-box; }
     :root {
-      --bg:#f5f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --blue:#2563eb;
-      --red:#dc2626; --orange:#ea580c; --purple:#7c3aed; --teal:#0891b2;
+      --bg:#f5f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280;
+      --blue:#2563eb; --red:#dc2626; --orange:#ea580c; --purple:#7c3aed; --teal:#0891b2;
     }
     body {
       margin: 0;
@@ -18,7 +18,7 @@
     }
     .app { display:flex; gap:16px; padding:16px; min-height:100vh; }
     .panel {
-      width:400px; flex:0 0 400px; background:var(--card); border-radius:15px; padding:16px;
+      width:410px; flex:0 0 410px; background:#fff; border-radius:15px; padding:16px;
       box-shadow:0 10px 30px rgba(0,0,0,.07); overflow:auto;
     }
     .main { flex:1; min-width:0; display:flex; flex-direction:column; gap:16px; }
@@ -26,19 +26,19 @@
     .title-row { display:flex; justify-content:space-between; align-items:center; gap:10px; }
     h1 { margin:0; font-size:22px; }
     h2 { font-size:16px; margin:18px 0 10px; padding-bottom:6px; border-bottom:1px solid #e5e7eb; }
-    h3 { font-size:16px; margin:18px 0 8px; }
+    h3 { font-size:16px; margin:16px 0 8px; }
     .muted { color:var(--muted); font-size:13px; line-height:1.65; }
     .tip {
-      margin-top:10px; padding:10px 12px; border-radius:10px; background:#eff6ff; color:#1e3a8a;
-      font-size:13px; line-height:1.65;
+      margin-top:10px; padding:10px 12px; border-radius:10px;
+      background:#eff6ff; color:#1e3a8a; font-size:13px; line-height:1.65;
     }
     .mode-switch {
-      display:grid; grid-template-columns:1fr 1fr; gap:6px; background:#f3f4f6; padding:5px;
-      border-radius:12px; margin-top:12px;
+      display:grid; grid-template-columns:1fr 1fr; gap:6px;
+      background:#f3f4f6; padding:5px; border-radius:12px; margin-top:12px;
     }
     .mode-switch button {
-      background:transparent; color:#4b5563; border:none; padding:9px 8px; border-radius:9px;
-      font-weight:700; cursor:pointer;
+      background:transparent; color:#4b5563; border:none; padding:9px 8px;
+      border-radius:9px; font-weight:700; cursor:pointer;
     }
     .mode-switch button.active { background:#fff; color:#111827; box-shadow:0 1px 5px rgba(0,0,0,.09); }
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -49,30 +49,17 @@
       outline:none; background:#fff;
     }
     input:focus, textarea:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.12); }
-    textarea { min-height:94px; resize:vertical; line-height:1.55; }
-    textarea[disabled], input[disabled] { background:#f3f4f6; color:#9ca3af; }
+    textarea { min-height:90px; resize:vertical; line-height:1.55; font-family:Consolas, monospace; }
+    input[disabled], textarea[disabled] { background:#f3f4f6; color:#9ca3af; }
     .small-box {
       border:1px dashed #cbd5e1; background:#f8fafc; border-radius:10px; padding:10px 12px;
       font-size:13px; line-height:1.7;
     }
-    .result-box {
-      margin-top:10px; border:1px solid #dbeafe; background:#f8fbff; border-radius:11px;
-      padding:11px 12px; font-size:13px; line-height:1.65;
-    }
-    .result-box .rows {
-      margin-top:6px; padding:7px 8px; background:#fff; border:1px solid #e5e7eb; border-radius:7px;
-      max-height:92px; overflow:auto; word-break:break-all; font-family:Consolas,monospace; font-size:12px;
-    }
-    .control-grid {
-      display:grid; grid-template-columns:70px 1fr 76px; gap:6px 8px; align-items:center;
-      margin-top:8px; font-size:12px;
-    }
-    .control-grid .head { color:#6b7280; font-weight:700; }
-    .control-grid input { padding:6px 7px; font-size:13px; }
+    .small-box strong { color:#111827; }
     .btn-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:9px; }
     button.action {
-      border:none; border-radius:9px; padding:9px 12px; cursor:pointer; font-weight:700;
-      background:var(--blue); color:#fff;
+      border:none; border-radius:9px; padding:9px 12px; cursor:pointer;
+      font-weight:700; background:var(--blue); color:#fff;
     }
     button.secondary { background:#eef2ff; color:#3730a3; }
     button.gray { background:#f3f4f6; color:#111827; }
@@ -99,6 +86,30 @@
     .drag-badge {
       display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 9px;
       font-size:12px; font-weight:700; background:#fff7ed; color:#9a3412;
+    }
+    details.advanced {
+      margin-top:10px; border:1px solid #e5e7eb; border-radius:12px; background:#fafafa; padding:8px 10px;
+    }
+    details.advanced > summary {
+      cursor:pointer; font-weight:700; color:#374151; outline:none; user-select:none;
+    }
+    .control-grid {
+      display:grid; grid-template-columns:86px 1fr 120px; gap:6px 8px; align-items:center;
+      margin-top:10px; font-size:12px;
+    }
+    .control-grid .head { color:#6b7280; font-weight:700; }
+    .control-grid input { padding:6px 7px; font-size:13px; }
+    .result-box {
+      margin-top:10px; border:1px solid #dbeafe; background:#f8fbff; border-radius:11px;
+      padding:11px 12px; font-size:13px; line-height:1.65;
+    }
+    .result-box .rules {
+      margin-top:8px; padding:9px 10px; background:#fff; border:1px solid #e5e7eb; border-radius:8px;
+      font-family:Consolas, monospace; font-size:13px; white-space:pre-wrap; line-height:1.6;
+    }
+    .subtle { color:#6b7280; font-size:12px; line-height:1.6; }
+    .inline-note {
+      display:inline-block; font-size:11px; color:#6b7280; margin-left:6px;
     }
 
     .modal-bg {
@@ -137,7 +148,7 @@
       .app{padding:10px;}
       .grid2{grid-template-columns:1fr;}
       .stats{grid-template-columns:1fr 1fr;}
-      .control-grid{grid-template-columns:58px 1fr 70px;}
+      .control-grid{grid-template-columns:64px 1fr 90px;}
     }
   </style>
 </head>
@@ -145,10 +156,12 @@
 <div class="app">
   <aside class="panel">
     <div class="title-row">
-      <h1>插肩毛衣曲线设计器 v1.1</h1>
+      <h1>插肩毛衣曲线设计器 v1.2</h1>
       <button class="help" id="helpBtn">？ 使用说明</button>
     </div>
-    <div class="muted">v1.1 修正了“引返”示意：它不再只在后片加高，而是会沿着两袖和前片两侧延伸，并在前片中间保留一段平段。</div>
+    <div class="muted">
+      v1.2 重点修正：<b>拖拽反推结果更简单</b>，并且严格遵守“<b>不能连续每行都加针</b>，最密只能隔行加针（n≥2）”。
+    </div>
 
     <div class="mode-switch">
       <button id="ruleModeBtn" class="active">规则输入</button>
@@ -173,24 +186,45 @@
     <section id="ruleSection">
       <h2>加针规则</h2>
       <div class="field">
-        <label>格式：起始行-结束行:每n行加一次</label>
+        <label>格式：起始行-结束行:每n行加一次（n 必须 ≥ 2）</label>
         <textarea id="rules">1-80:2</textarea>
       </div>
-      <div class="muted">例：<code>1-20:4</code>、<code>21-50:3</code>、<code>51-90:2</code>。</div>
+      <div class="muted">
+        例：<code>1-20:4</code>、<code>21-50:3</code>、<code>51-90:2</code><br>
+        意思是：在对应区间里，每 n 行有 1 行做一次“总共 +8 针”的加针。
+      </div>
     </section>
 
     <section id="dragSection" hidden>
-      <h2>拖拽曲线 → 反推加针</h2>
+      <h2>拖拽设计（更适合找“好看的弧度”）</h2>
       <div class="small-box">
-        图中橙色圆点就是控制点。<b>左右拖动四条红线上的任意同层圆点</b>，四条对称插肩线会一起改变。
-        程序会把连续曲线自动量化成真实可执行的“加针行”。
+        <strong>最简单的用法：</strong>不用先看数字，直接拖图里的<b>橙色点</b>。<br>
+        你负责“拖出想要的弧度”，程序负责自动反推成左边这种规则格式：<br>
+        <code>1-20:4</code><br>
+        <code>21-50:3</code><br>
+        <code>51-90:2</code>
       </div>
-      <div class="control-grid" id="controlEditor"></div>
+
+      <details class="advanced">
+        <summary>高级数字微调（可选，不看也能用）</summary>
+        <div class="subtle" style="margin-top:8px;">
+          这里的意思是：<b>到某一行时，前面累计已经做了多少次“+8”</b>。<br>
+          例如：“16 行，累计 8 次”表示：织到第 16 行为止，总共已经做了 8 次加针。<br>
+          注意：由于实际织法要求隔行加针，所以程序会自动限制最大值，不会出现“每一行都加”的情况。
+        </div>
+        <div class="control-grid" id="controlEditor"></div>
+      </details>
+
       <div class="result-box">
-        <b>反推结果</b>
-        <div id="dragSummary"></div>
-        <div class="rows" id="increaseRowsText"></div>
+        <b>反推结果（推荐直接看这个）</b>
+        <div id="dragSummary" style="margin-top:6px;"></div>
+        <div class="rules" id="reverseRulesText"></div>
+        <div class="subtle" id="reverseRulesNote" style="margin-top:6px;"></div>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="action secondary" id="applyRulesBtn">将反推规则写回“规则输入”</button>
+        </div>
       </div>
+
       <div class="btn-row">
         <button class="action secondary" id="straightPreset">直线</button>
         <button class="action secondary" id="outwardPreset">柔和外弯</button>
@@ -207,7 +241,7 @@
       <div class="field"><label>前片平段显示缩放</label><input id="frontFlatScale" type="number" min="0.6" max="1.6" step="0.05" value="1.0"></div>
     </div>
     <div class="muted">
-      蓝色环状示意表示：引返路径会经过四条加针线并延伸到前片两侧；前片最中间保留一小段平段。<br>
+      蓝色环状示意表示：引返路径会经过四条加针线，并延伸到前片两侧；前片最中间保留一小段平段。<br>
       可拖拽：<b>蓝色上方圆点</b>改落差，<b>蓝色右上圆点</b>改包裹范围，<b>蓝色前片右端圆点</b>改前片平段比例。
     </div>
 
@@ -221,7 +255,8 @@
 
     <div class="error" id="errorBox"></div>
     <div class="footer">
-      红线是“按实际加针行量化后的可织路径”；青色虚线是理想连续目标弧线；蓝色环状示意表示引返路径/前后落差的分布范围，不是逐针精确引返路线。
+      红线是“按真实可执行加针规则量化后的插肩线”；青色虚线是理想目标弧线；
+      蓝色环状示意表示引返路径/前后落差的分布范围，不是逐针精确引返图。
     </div>
   </aside>
 
@@ -245,62 +280,58 @@
 <div class="modal-bg" id="helpModal" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <div class="modal-head">
-      <h2 id="helpTitle">v1.1 使用说明</h2>
+      <h2 id="helpTitle">v1.2 使用说明</h2>
       <button class="close" id="closeHelp">×</button>
     </div>
     <div class="modal-body">
       <div class="callout">
-        <b>v1.1 的主要修正：</b>
-        蓝色“引返”示意不再只在后片上方，而是会沿着两袖和前片两侧延伸，经过四条插肩线，并在前片最中间留出一段平段。
+        <b>v1.2 的核心变化：</b><br>
+        1）拖拽反推结果不再主要给一长串“第几行加针”；<br>
+        2）而是尽量整理成你们熟悉的规则格式：<code>起始行-结束行:每n行加一次</code>；<br>
+        3）并严格遵守 <b>n ≥ 2</b>，也就是不能连续每一行都加针。
       </div>
 
       <h3>一、推荐使用流程</h3>
       <ol>
         <li>先填总起针数、横密、纵密、育克总行数。</li>
-        <li>如果你已经有“每几行加一次”的方案，用 <b>规则输入模式</b>。</li>
-        <li>如果你想直接试好看的弧度，用 <b>拖拽设计模式</b>。</li>
-        <li>红线满意之后，再微调蓝色“引返 / 前后落差示意”。</li>
+        <li>如果你已经知道方案，用 <b>规则输入</b>。</li>
+        <li>如果你只想“先看弧度好不好看”，切到 <b>拖拽设计</b>。</li>
+        <li>在拖拽设计里，直接拖图中的橙色点，不用先管下面的高级数字。</li>
+        <li>满意后，直接看“反推结果”里的规则即可。</li>
       </ol>
 
-      <h3>二、拖拽模式怎么用？</h3>
+      <h3>二、拖拽设计里最重要的东西是什么？</h3>
       <ul>
-        <li>橙色控制点：拖四条插肩线的弧度。</li>
-        <li>蓝色上方控制点：拖高/拖低，引返落差更大或更小。</li>
-        <li>蓝色右上控制点：向外拖则引返包裹范围更大，向内拖则范围更集中。</li>
-        <li>蓝色前片右端控制点：拖动可改变“前片中间平段比例”。</li>
+        <li><b>橙色点：</b>拖这个，改四条插肩线的弧度。</li>
+        <li><b>蓝色点：</b>拖这个，改引返/前后落差示意。</li>
+        <li><b>反推结果：</b>把你拖出来的弧度，自动翻译成“第几行到第几行，每几行加一次”的规则。</li>
       </ul>
 
-      <h3>三、前片中间平段比例是什么？</h3>
+      <h3>三、为什么还会有“高级数字微调”？</h3>
       <p>
-        它表示前脖子最中间那一段保留多少“平”的空间。值越大，蓝色路径在前片中央留下的平段越宽；
-        值越小，蓝色路径越接近一直绕到前中部。
+        这是给想精细控制的人用的。它的意思是：
+        <b>织到某一行时，前面累计已经做了多少次“+8”</b>。
+        例如“16 行，累计 8 次”，就是到第 16 行为止，一共已经做了 8 次加针。
+      </p>
+      <p>如果你朋友看不懂这块，可以完全不展开，直接靠拖图就行。</p>
+
+      <h3>四、拖拽反推结果为什么不一定完全等于目标弧线？</h3>
+      <p>
+        因为真正编织是离散的，不可能连续变化。程序会在尽量贴近目标弧度的前提下，生成满足实际编织约束的规则，
+        尤其会强制满足：<b>最密只能每 2 行加一次，不能连续每行都加</b>。
       </p>
 
-      <h3>四、引返包裹范围是什么？</h3>
-      <p>
-        它表示这段引返/落差影响的范围有多宽。值大时，会更明显地延伸到前片两侧和袖子方向；
-        值小时，主要集中在后片附近。
-      </p>
-
-      <h3>五、拖出来的红线和真实织法是什么关系？</h3>
-      <table class="help-table">
-        <tr><th>显示内容</th><th>含义</th></tr>
-        <tr><td>青色虚线</td><td>你拖出来的理想连续弧线。</td></tr>
-        <tr><td>红色实线</td><td>程序量化成真正“某些行 +8 针”之后的离散可织曲线。</td></tr>
-        <tr><td>紫色点</td><td>实际发生 +8 针的那些行。</td></tr>
-        <tr><td>蓝色环状示意</td><td>引返/前后落差的作用区域示意，不是逐次转身的精确针法图。</td></tr>
-      </table>
-
-      <h3>六、规则输入格式</h3>
+      <h3>五、规则输入格式</h3>
       <div class="example">1-20:4
 21-50:3
 51-90:2</div>
       <p>表示前 20 行每 4 行加一次，中间每 3 行加一次，后面每 2 行加一次。</p>
 
-      <div class="callout">
-        <b>注意：</b>
-        当前工具重点是“几何趋势可视化”。真实成衣还会受到线材、针号、松紧、花样和下水影响。
-      </div>
+      <h3>六、引返示意怎么理解？</h3>
+      <p>
+        蓝色环状示意表示“前后落差”的作用范围：它从后片开始，沿着两袖和前片两侧延伸，并在前片中间保留一段平段。
+        当前版本主要做几何示意，不是逐次转身的精确引返针法图。
+      </p>
     </div>
   </div>
 </div>
@@ -310,13 +341,17 @@
   "use strict";
   const $ = id => document.getElementById(id);
   const svg = $("chart");
+
   let mode = "rule";
   let controlRows = [];
   let controlGroups = [];
   let activeDrag = null;
+  let lastReverseRuleText = "";
+  let lastReverseRuleNote = "";
 
   function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
   function num(id,f=0){ const v=Number($(id).value); return Number.isFinite(v)?v:f; }
+  function ceilHalf(x){ return Math.ceil(x/2); }
 
   function getParams(){
     return {
@@ -338,9 +373,9 @@
   }
 
   function initialSplit(total){
-    let front=Math.round(total/3), back=Math.round(total/3);
-    let remain=total-front-back;
-    let leftSleeve=Math.floor(remain/2), rightSleeve=remain-leftSleeve;
+    let front = Math.round(total/3), back = Math.round(total/3);
+    let remain = total - front - back;
+    let leftSleeve = Math.floor(remain/2), rightSleeve = remain - leftSleeve;
     return {front,back,leftSleeve,rightSleeve};
   }
 
@@ -350,37 +385,46 @@
   }
 
   function parseRules(text){
-    const lines=text.split(/\n+/).map(s=>s.trim()).filter(Boolean);
+    const lines = text.split(/\n+/).map(s=>s.trim()).filter(Boolean);
     const rules=[], errors=[];
     lines.forEach((line,i)=>{
       const m=line.match(/^(\d+)\s*-\s*(\d+)\s*:\s*(\d+)$/);
-      if(!m){ errors.push(`第${i+1}行格式错误：${line}`); return; }
+      if(!m){ errors.push(`第 ${i+1} 行格式错误：${line}`); return; }
       const start=+m[1], end=+m[2], every=+m[3];
-      if(start>end) errors.push(`第${i+1}行：起始行不能大于结束行`);
-      if(every<1) errors.push(`第${i+1}行：间隔必须≥1`);
+      if(start>end) errors.push(`第 ${i+1} 行：起始行不能大于结束行`);
+      if(every<2) errors.push(`第 ${i+1} 行：n 必须 ≥ 2，不能连续每行都加针`);
       rules.push({start,end,every,raw:line});
     });
     rules.sort((a,b)=>a.start-b.start);
     for(let i=1;i<rules.length;i++){
-      if(rules[i].start<=rules[i-1].end) errors.push(`规则区间重叠：${rules[i-1].raw} 与 ${rules[i].raw}`);
+      if(rules[i].start<=rules[i-1].end){
+        errors.push(`规则区间重叠：${rules[i-1].raw} 与 ${rules[i].raw}`);
+      }
     }
     return {rules,errors};
   }
 
   function isIncreaseRow(row,rules){
     for(const r of rules){
-      if(row>=r.start && row<=r.end) return ((row-r.start)%r.every===0);
+      if(row>=r.start && row<=r.end){
+        return ((row-r.start)%r.every===0);
+      }
     }
     return false;
   }
 
   function scheduleFromRules(totalRows,rules){
-    const groups=new Array(totalRows+1).fill(0), incRows=[];
+    const groups=new Array(totalRows+1).fill(0), target=new Array(totalRows+1).fill(0), incRows=[];
+    let lastInc = -99999;
     for(let r=1;r<=totalRows;r++){
       groups[r]=groups[r-1];
-      if(isIncreaseRow(r,rules)){ groups[r]++; incRows.push(r); }
+      target[r]=target[r-1];
+      if(isIncreaseRow(r,rules)){
+        if(r-lastInc<2) continue; // 再防御一次
+        groups[r]++; target[r]++; incRows.push(r); lastInc = r;
+      }
     }
-    return {groups,incRows,target:groups.slice(),fitError:0};
+    return {groups,target,incRows,fitError:0};
   }
 
   function buildControlRows(totalRows){
@@ -412,7 +456,6 @@
         m[i]=(w1+w2)/(w1/d[i-1]+w2/d[i]);
       }
     }
-
     let k=0;
     while(k<n-2 && xq>xs[k+1]) k++;
     const h=xs[k+1]-xs[k], t=(xq-xs[k])/h;
@@ -422,39 +465,60 @@
 
   function scheduleFromDrag(totalRows){
     const target=new Array(totalRows+1).fill(0);
-    for(let r=0;r<=totalRows;r++) target[r]=Math.max(0,interpMonotone(controlRows,controlGroups,r));
+    for(let r=0;r<=totalRows;r++){
+      target[r] = Math.max(0, interpMonotone(controlRows, controlGroups, r));
+      target[r] = Math.min(target[r], ceilHalf(r)); // 到第 r 行最多也只能有 ceil(r/2) 次加针
+    }
 
     const groups=new Array(totalRows+1).fill(0), incRows=[];
+    let lastInc = -99999;
     let maxErr=0;
     for(let r=1;r<=totalRows;r++){
-      let desired=Math.round(target[r]);
-      desired=Math.max(groups[r-1],desired);
-      desired=Math.min(groups[r-1]+1,desired); // 每行最多一组+8
-      groups[r]=desired;
-      if(groups[r]>groups[r-1]) incRows.push(r);
-      maxErr=Math.max(maxErr,Math.abs(target[r]-groups[r]));
+      groups[r]=groups[r-1];
+      const desired=Math.round(target[r]);
+
+      if(desired>groups[r] && r-lastInc>=2){
+        groups[r]++;
+        incRows.push(r);
+        lastInc = r;
+      }
+
+      maxErr=Math.max(maxErr, Math.abs(target[r]-groups[r]));
     }
-    return {groups,incRows,target,fitError:maxErr};
+    return {groups,target,incRows,fitError:maxErr};
+  }
+
+  function maxGroupsForControlRow(row){
+    return ceilHalf(row);
   }
 
   function ensureControlsFromCurrentRules(force=false){
     const p=getParams();
     const newRows=buildControlRows(p.totalRows);
     if(!force && controlRows.length && controlRows[controlRows.length-1]===p.totalRows) return;
-    const {rules}=parseRules($("rules").value.trim());
-    const sched=scheduleFromRules(p.totalRows,rules);
+
+    const parsed=parseRules($("rules").value.trim());
+    const schedule = parsed.errors.length ? scheduleFromRules(p.totalRows,[{start:1,end:p.totalRows,every:2}]) : scheduleFromRules(p.totalRows,parsed.rules);
+
     controlRows=newRows;
-    controlGroups=controlRows.map(r=>sched.groups[r]||0);
+    controlGroups=controlRows.map(r => Math.min(schedule.groups[r]||0, maxGroupsForControlRow(r)));
     controlGroups[0]=0;
   }
 
   function setControlGroup(i,v){
-    const p=getParams();
-    v=clamp(Math.round(v),0,p.totalRows);
+    v = Math.round(v);
     if(i===0) v=0;
-    controlGroups[i]=v;
-    for(let j=i+1;j<controlGroups.length;j++) if(controlGroups[j]<controlGroups[j-1]) controlGroups[j]=controlGroups[j-1];
-    for(let j=i-1;j>=0;j--) if(controlGroups[j]>controlGroups[j+1]) controlGroups[j]=controlGroups[j+1];
+    const maxNow = maxGroupsForControlRow(controlRows[i]);
+    controlGroups[i] = clamp(v, 0, maxNow);
+
+    for(let j=i+1;j<controlGroups.length;j++){
+      const maxJ = maxGroupsForControlRow(controlRows[j]);
+      controlGroups[j] = clamp(Math.max(controlGroups[j], controlGroups[j-1]), 0, maxJ);
+    }
+    for(let j=i-1;j>=0;j--){
+      const maxJ = maxGroupsForControlRow(controlRows[j]);
+      controlGroups[j] = clamp(Math.min(controlGroups[j], controlGroups[j+1]), 0, maxJ);
+    }
     controlGroups[0]=0;
   }
 
@@ -504,13 +568,83 @@
     ].join("");
   }
 
+  function compressIncRowsToRules(incRows){
+    if(!incRows.length) return {lines:["无加针规则"], note:"当前没有产生加针。"};
+
+    const lines=[];
+    const singles=[];
+
+    let start=incRows[0];
+    let prev=incRows[0];
+    let gap = incRows.length>=2 ? incRows[1]-incRows[0] : null;
+
+    function pushSegment(segStart, segEnd, segGap, count){
+      if(count>=2 && segGap!==null){
+        lines.push(`${segStart}-${segEnd}:${segGap}`);
+      }else{
+        singles.push(segStart);
+      }
+    }
+
+    let count=1;
+    for(let i=1;i<incRows.length;i++){
+      const cur=incRows[i];
+      const curGap=cur-prev;
+
+      if(count===1){
+        gap=curGap;
+        count=2;
+        prev=cur;
+        continue;
+      }
+
+      if(curGap===gap){
+        count++;
+        prev=cur;
+      }else{
+        pushSegment(start, prev, gap, count);
+        start=cur;
+        prev=cur;
+        gap=null;
+        count=1;
+      }
+    }
+    pushSegment(start, prev, gap, count);
+
+    let note = "已尽量整理成“起始行-结束行:每n行加一次”的格式，且保证 n ≥ 2。";
+    if(singles.length){
+      note += `\n另外有少量无法再压缩成区间的单独加针行：${singles.map(x=>`第${x}行`).join("、")}。`;
+    }
+
+    const textLines = lines.length ? lines.slice() : [];
+    if(singles.length){
+      singles.forEach(r => textLines.push(`第${r}行：单独加针一次`));
+    }
+    return {lines:textLines.length?textLines:["无加针规则"], note};
+  }
+
+  function renderReverseResult(p,schedule){
+    if(mode!=="drag") return;
+    const avg=schedule.incRows.length ? (p.totalRows/schedule.incRows.length).toFixed(2) : "—";
+    const rr = compressIncRowsToRules(schedule.incRows);
+    lastReverseRuleText = rr.lines.join("\n");
+    lastReverseRuleNote = rr.note;
+    $("dragSummary").innerHTML =
+      `总加针次数：<b>${schedule.incRows.length}</b> 次（每次 +8，共增加 <b>${schedule.incRows.length*8}</b> 针）<br>
+       平均大约：<b>${avg}</b> 行加一次　｜　与目标弧度的最大差异：<b>${schedule.fitError.toFixed(2)}</b> 组`;
+    $("reverseRulesText").textContent = lastReverseRuleText;
+    $("reverseRulesNote").textContent = lastReverseRuleNote;
+  }
+
   function renderControlEditor(){
     if(mode!=="drag") return;
     const box=$("controlEditor");
-    let h=`<div class="head">控制点</div><div class="head">所在行</div><div class="head">累计+8组</div>`;
+    let h = `<div class="head">调节点</div><div class="head">高度（第几行）</div><div class="head">到这里累计加了几次</div>`;
     controlRows.forEach((r,i)=>{
-      h += `<div>${i===0?"起点":`点 ${i}`}</div><div>${r} 行</div>
-      <input class="ctrlInput" data-i="${i}" type="number" min="0" max="300" step="1" value="${Math.round(controlGroups[i]||0)}" ${i===0?"disabled":""}>`;
+      const maxV=maxGroupsForControlRow(r);
+      h += `<div>${i===0?"起点":`点 ${i}`}</div>
+            <div>${r} 行 <span class="inline-note">最多 ${maxV} 次</span></div>
+            <input class="ctrlInput" data-i="${i}" type="number" min="0" max="${maxV}" step="1" value="${Math.round(controlGroups[i]||0)}" ${i===0?"disabled":""}>`;
     });
     box.innerHTML=h;
     box.querySelectorAll(".ctrlInput").forEach(el=>{
@@ -519,15 +653,6 @@
         render();
       });
     });
-  }
-
-  function renderDragSummary(p,schedule){
-    if(mode!=="drag") return;
-    const avg=schedule.incRows.length ? (p.totalRows/schedule.incRows.length).toFixed(2) : "—";
-    $("dragSummary").innerHTML =
-      `<div>总加针组数：<b>${schedule.incRows.length}</b>（总增加 ${schedule.incRows.length*8} 针）</div>
-       <div>平均间隔：<b>${avg}</b> 行　｜　最大拟合误差：<b>${schedule.fitError.toFixed(2)}</b> 组</div>`;
-    $("increaseRowsText").textContent = schedule.incRows.length ? `加针行：${schedule.incRows.join(", ")}` : "当前没有加针行";
   }
 
   function el(name,attrs={}){
@@ -563,7 +688,7 @@
     const flatRatio = p.frontFlatRatio;
     const flatScale = p.frontFlatScale;
 
-    const phi = 16 + 52 * flatRatio * flatScale;   // 控制前片平段宽度（角度）
+    const phi = 16 + 52 * flatRatio * flatScale;
     const startA = 90 + phi;
     const endA = 450 - phi;
 
@@ -575,8 +700,8 @@
       const rad = a*Math.PI/180;
       const u = Math.cos(rad), v = Math.sin(rad);
 
-      const backDist = Math.abs((((a - 270) % 360) + 540) % 360 - 180); // 到后中270°的角距
-      const t = clamp(1 - backDist / (180 - phi), 0, 1);  // 1在后中，0靠近平段端点
+      const backDist = Math.abs((((a - 270) % 360) + 540) % 360 - 180);
+      const t = clamp(1 - backDist / (180 - phi), 0, 1);
       const profile = Math.pow(t, 1.25);
 
       const radialOff = radialBase + sideExtra * (0.35 + 0.65*profile);
@@ -589,9 +714,8 @@
 
     const leftEnd = outerPts[0];
     const rightEnd = outerPts[outerPts.length-1];
-
-    // 前片中央平段：用一段直线封口
     const flatY = Math.max(leftEnd.y, rightEnd.y) - 1.5*scale + 2*scale*flatRatio;
+
     const flatPts = [
       {x:rightEnd.x, y:rightEnd.y},
       {x:cx + (rightEnd.x-cx)*0.44, y:flatY},
@@ -600,36 +724,25 @@
     ];
 
     const closedPts = outerPts.concat(flatPts);
-    const fillPath = pathFrom(closedPts, true);
-
+    svg.appendChild(el("path",{d:pathFrom(closedPts,true), fill:"rgba(37,99,235,0.10)", stroke:"none"}));
+    svg.appendChild(el("path",{d:pathFrom(outerPts,false), fill:"none", stroke:"#2563eb", "stroke-width":3.2}));
     svg.appendChild(el("path",{
-      d: fillPath, fill:"rgba(37,99,235,0.10)", stroke:"none"
-    }));
-
-    svg.appendChild(el("path",{
-      d: pathFrom(outerPts,false), fill:"none", stroke:"#2563eb", "stroke-width":3.2
-    }));
-
-    svg.appendChild(el("path",{
-      d: `M ${rightEnd.x} ${rightEnd.y} L ${flatPts[1].x} ${flatPts[1].y} L ${flatPts[2].x} ${flatPts[2].y} L ${leftEnd.x} ${leftEnd.y}`,
+      d:`M ${rightEnd.x} ${rightEnd.y} L ${flatPts[1].x} ${flatPts[1].y} L ${flatPts[2].x} ${flatPts[2].y} L ${leftEnd.x} ${leftEnd.y}`,
       fill:"none", stroke:"#2563eb", "stroke-width":3.2
     }));
 
-    // 内部虚线，辅助理解
-    const innerStart = ellipsePoint(cx,cy,rx,ry,startA);
-    const innerEnd = ellipsePoint(cx,cy,rx,ry,450-phi);
-    const innerMidL = {x:cx - (innerEnd.x-cx)*0.42, y:cy + ry*0.95};
-    const innerMidR = {x:cx + (innerEnd.x-cx)*0.42, y:cy + ry*0.95};
     svg.appendChild(el("path",{
-      d:`M ${innerStart.x} ${innerStart.y} Q ${cx} ${cy-ry-4} ${innerEnd.x} ${innerEnd.y}
-         M ${innerEnd.x} ${innerEnd.y} L ${innerMidR.x} ${innerMidR.y} L ${innerMidL.x} ${innerMidL.y} L ${innerStart.x} ${innerStart.y}`,
+      d:`M ${ellipsePoint(cx,cy,rx,ry,startA).x} ${ellipsePoint(cx,cy,rx,ry,startA).y}
+         Q ${cx} ${cy-ry-4} ${ellipsePoint(cx,cy,rx,ry,450-phi).x} ${ellipsePoint(cx,cy,rx,ry,450-phi).y}
+         M ${ellipsePoint(cx,cy,rx,ry,450-phi).x} ${ellipsePoint(cx,cy,rx,ry,450-phi).y}
+         L ${flatPts[1].x} ${flatPts[1].y} L ${flatPts[2].x} ${flatPts[2].y}
+         L ${ellipsePoint(cx,cy,rx,ry,startA).x} ${ellipsePoint(cx,cy,rx,ry,startA).y}`,
       fill:"none", stroke:"#93c5fd", "stroke-width":1.6, "stroke-dasharray":"6 5"
     }));
 
     addText(cx, cy - ry - extraLift - 16, "引返路径 / 前后落差", {size:12, center:true, fill:"#1d4ed8", bold:true});
     addText(cx, flatY + 18, "前片平段", {size:11, center:true, fill:"#1d4ed8", bold:true});
 
-    // 3个拖拽句柄
     const topHandle = outerPts.reduce((a,b)=>a.y<b.y?a:b);
     const sideAngle = 330;
     let sideHandle = outerPts.reduce((best,pnt)=>Math.abs(pnt.a-sideAngle)<Math.abs(best.a-sideAngle)?pnt:best, outerPts[0]);
@@ -648,13 +761,13 @@
       cursor:"ew-resize", "data-short":"flat"
     }));
 
-    return { topHandle, sideHandle, flatHandle, extraLift, phi };
+    return { topHandle, sideHandle, flatHandle };
   }
 
   function draw(sim,p,schedule){
     svg.innerHTML="";
     const W=1000,H=760,cx=500,cy=380;
-    const maxShiftCm = p.totalRows*sim.stitchW*p.curveScale;
+    const maxShiftCm = ceilHalf(p.totalRows)*sim.stitchW*p.curveScale;
     const maxDepthCm = p.totalRows*sim.rowH;
     const maxShortCm = Math.max(p.shortRowsExtra,12)*sim.rowH;
     const halfX = p.neckWidth/2 + maxShiftCm + 6;
@@ -665,24 +778,20 @@
     const state = {cx,cy,rx,ry,scale,rowH:sim.rowH,p};
 
     svg.appendChild(el("rect",{x:0,y:0,width:W,height:H,fill:"transparent"}));
-    addText(24,34,mode==="drag"?"拖拽设计：目标弧线 → 反推加针":"规则输入：加针规律 → 插肩线",{size:21,bold:true});
-    addText(24,58,mode==="drag"?"拖橙色点设计红线；拖蓝色点设计引返范围":"修改左侧规则后点击“生成 / 更新”",{size:13,fill:"#6b7280"});
+    addText(24,34,mode==="drag"?"拖拽设计：先拖弧度，再看反推规则":"规则输入：输入规则，直接看插肩线",{size:21,bold:true});
+    addText(24,58,mode==="drag"?"橙色点控制插肩弧度；蓝色点控制引返示意":"修改左侧规则后点击“生成 / 更新”",{size:13,fill:"#6b7280"});
 
     svg.appendChild(el("line",{x1:cx,y1:18,x2:cx,y2:H-18,stroke:"#d1d5db","stroke-dasharray":"6 6"}));
     svg.appendChild(el("line",{x1:18,y1:cy,x2:W-18,y2:cy,stroke:"#e5e7eb","stroke-dasharray":"6 6"}));
 
-    // 领口
     svg.appendChild(el("ellipse",{cx,cy,rx,ry,fill:"#fff",stroke:"#b8bec9","stroke-width":2.7}));
+    drawShortRowLoop(state,p);
 
-    // 引返路径示意
-    const shortRowGeom = drawShortRowLoop(state,p);
-
-    // 插肩线起点
     const starts = [
-      {pt:ellipsePoint(cx,cy,rx,ry,230),sx:-1,sy:-1,name:"tl"},
-      {pt:ellipsePoint(cx,cy,rx,ry,310),sx: 1,sy:-1,name:"tr"},
-      {pt:ellipsePoint(cx,cy,rx,ry,130),sx:-1,sy: 1,name:"bl"},
-      {pt:ellipsePoint(cx,cy,rx,ry, 50),sx: 1,sy: 1,name:"br"}
+      {pt:ellipsePoint(cx,cy,rx,ry,230),sx:-1,sy:-1},
+      {pt:ellipsePoint(cx,cy,rx,ry,310),sx: 1,sy:-1},
+      {pt:ellipsePoint(cx,cy,rx,ry,130),sx:-1,sy: 1},
+      {pt:ellipsePoint(cx,cy,rx,ry, 50),sx: 1,sy: 1}
     ];
 
     const actualSets=[], targetSets=[];
@@ -696,7 +805,6 @@
       actualSets.push(actual); targetSets.push(target);
     });
 
-    // 外轮廓示意
     const tl=actualSets[0].at(-1), tr=actualSets[1].at(-1), bl=actualSets[2].at(-1), br=actualSets[3].at(-1);
     svg.appendChild(el("path",{
       d:`M ${tl.x} ${tl.y} Q ${cx} ${tl.y-40} ${tr.x} ${tr.y}
@@ -714,8 +822,7 @@
 
     actualSets.forEach(arr=>svg.appendChild(el("path",{
       d:pathFrom(arr), fill:"none", stroke:"#dc2626",
-      "stroke-width":Math.max(2.7,p.raglanWidth*.8),
-      "stroke-linecap":"round", "stroke-linejoin":"round"
+      "stroke-width":Math.max(2.7,p.raglanWidth*.8), "stroke-linecap":"round", "stroke-linejoin":"round"
     })));
 
     if(p.showPoints){
@@ -741,7 +848,7 @@
           }));
         });
       });
-      addText(24,H-28,"提示：橙色点拖插肩弧度；蓝色点拖引返示意；左侧数值会同步变化。",{size:13,fill:"#9a3412",bold:true});
+      addText(24,H-28,"提示：主要看左边“反推结果”；高级数字微调不懂可以不展开。",{size:13,fill:"#9a3412",bold:true});
     } else {
       addText(24,H-28,`当前判断：${shapeText(schedule)}`,{size:13,fill:"#374151",bold:true});
     }
@@ -752,19 +859,25 @@
     addText(Math.min(W-55,tr.x+28), cy, "右袖", {size:14,center:true,bold:true});
     addText(cx, cy+5, "领口", {size:13,center:true,fill:"#6b7280",bold:true});
 
-    svg._drawState = {scale,rx,ry,cx,cy,starts,sim,p,shortRowGeom};
+    svg._drawState = {scale,rx,ry,cx,cy,starts,sim,p};
   }
 
   function render(){
     $("errorBox").textContent="";
     updateSplitInfo();
     const p=getParams();
-    if(p.raglanWidth % 2 !== 0){ $("errorBox").textContent="插肩线针数请使用偶数，例如 2 或 4。"; return; }
+    if(p.raglanWidth % 2 !== 0){
+      $("errorBox").textContent="插肩线针数请使用偶数，例如 2 或 4。";
+      return;
+    }
 
     let schedule;
     if(mode==="rule"){
       const parsed=parseRules($("rules").value.trim());
-      if(parsed.errors.length){ $("errorBox").textContent=parsed.errors.join("\n"); return; }
+      if(parsed.errors.length){
+        $("errorBox").textContent=parsed.errors.join("\n");
+        return;
+      }
       schedule=scheduleFromRules(p.totalRows, parsed.rules);
     }else{
       ensureControlsFromCurrentRules(false);
@@ -773,8 +886,10 @@
 
     const sim=simulate(p,schedule);
     renderStats(sim,p,schedule);
-    renderControlEditor();
-    renderDragSummary(p,schedule);
+    if(mode==="drag"){
+      renderControlEditor();
+      renderReverseResult(p,schedule);
+    }
     draw(sim,p,schedule);
   }
 
@@ -788,38 +903,45 @@
     $("dragSection").hidden=mode!=="drag";
     $("modeTip").innerHTML = mode==="rule"
       ? `当前是 <b>规则输入模式</b>：输入“每几行加一次”，程序计算插肩线。`
-      : `<span class="drag-badge">拖拽设计已开启</span>　拖橙色点设计插肩线，拖蓝色点设计引返/前片平段。`;
+      : `<span class="drag-badge">拖拽设计已开启</span>　先拖图，再直接看“反推结果”；程序会自动保证 n ≥ 2。`;
     render();
   }
 
   function applyPreset(type){
     const p=getParams();
     controlRows=buildControlRows(p.totalRows);
-    const max=Math.max(1,Math.round(p.totalRows/2));
+    const max=ceilHalf(p.totalRows);
     const t=controlRows.map(r=>r/p.totalRows);
-    if(type==="straight") controlGroups=t.map(x=>Math.round(max*x));
-    if(type==="outward") controlGroups=t.map(x=>Math.round(max*Math.pow(x,1.55)));
-    if(type==="inward") controlGroups=t.map(x=>Math.round(max*Math.pow(x,.62)));
-    if(type==="irregular"){
+
+    if(type==="straight"){
+      controlGroups=t.map(x=>Math.round(max*x));
+    }else if(type==="outward"){
+      controlGroups=t.map(x=>Math.round(max*Math.pow(x,1.55)));
+    }else if(type==="inward"){
+      controlGroups=t.map(x=>Math.round(max*Math.pow(x,.62)));
+    }else if(type==="irregular"){
       controlGroups=t.map((x,i)=>{
         const wobble=[0,-.03,.07,-.04,.06,0][i]||0;
         return Math.round(max*clamp(Math.pow(x,1.05)+wobble,0,1));
       });
-      for(let i=1;i<controlGroups.length;i++) controlGroups[i]=Math.max(controlGroups[i], controlGroups[i-1]);
     }
+
+    controlGroups = controlGroups.map((v,i)=>clamp(v,0,maxGroupsForControlRow(controlRows[i])));
+    for(let i=1;i<controlGroups.length;i++) controlGroups[i]=Math.max(controlGroups[i],controlGroups[i-1]);
     controlGroups[0]=0;
     render();
   }
 
-  // 拖拽
   svg.addEventListener("pointerdown", e=>{
     const t=e.target;
     if(t.dataset.ctrl!==undefined){
       activeDrag={type:"ctrl", index:+t.dataset.ctrl, line:+t.dataset.line, pointerId:e.pointerId};
-      svg.setPointerCapture(e.pointerId); e.preventDefault();
+      svg.setPointerCapture(e.pointerId);
+      e.preventDefault();
     }else if(t.dataset.short){
       activeDrag={type:"short", which:t.dataset.short, pointerId:e.pointerId};
-      svg.setPointerCapture(e.pointerId); e.preventDefault();
+      svg.setPointerCapture(e.pointerId);
+      e.preventDefault();
     }
   });
 
@@ -832,9 +954,11 @@
 
     if(activeDrag.type==="ctrl"){
       const s=st.starts[activeDrag.line];
-      const dx=(q.x-s.pt.x)*s.sx;
+      const dx=(q.x-st.cx) * Math.sign(s.sx);
+      const base=(s.pt.x-st.cx) * Math.sign(s.sx);
+      const useful = Math.max(0, dx - base);
       const denom=Math.max(1e-9, st.sim.stitchW*st.scale*st.p.curveScale);
-      setControlGroup(activeDrag.index, dx/denom);
+      setControlGroup(activeDrag.index, useful/denom);
       render();
       return;
     }
@@ -883,6 +1007,18 @@
     render();
   });
 
+  $("applyRulesBtn").addEventListener("click", ()=>{
+    if(!lastReverseRuleText) return;
+    const onlyLines = lastReverseRuleText
+      .split("\n")
+      .filter(line => /^\d+\-\d+\:\d+$/.test(line.trim()))
+      .join("\n");
+    if(onlyLines.trim()){
+      $("rules").value = onlyLines;
+      switchMode("rule");
+    }
+  });
+
   $("straightPreset").addEventListener("click", ()=>applyPreset("straight"));
   $("outwardPreset").addEventListener("click", ()=>applyPreset("outward"));
   $("inwardPreset").addEventListener("click", ()=>applyPreset("inward"));
@@ -904,13 +1040,13 @@
     "totalStitches","raglanWidth","stitchGauge","rowGauge","curveScale","neckWidth","neckHeight",
     "shortRowsExtra","shortRowsWidth","frontFlatRatio","frontFlatScale","showPoints","showTarget"
   ].forEach(id => $(id).addEventListener("change", render));
+
   $("totalRows").addEventListener("change", ()=>{
     if(mode==="drag") ensureControlsFromCurrentRules(true);
     render();
   });
   $("rules").addEventListener("change", ()=>{ if(mode==="rule") render(); });
 
-  // Help
   const modal=$("helpModal");
   function openHelp(){ modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); document.body.style.overflow="hidden"; }
   function closeHelp(){ modal.classList.remove("open"); modal.setAttribute("aria-hidden","true"); document.body.style.overflow=""; }
