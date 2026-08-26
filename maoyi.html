@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>插肩毛衣曲线设计器 v1.2.1</title>
+  <title>插肩毛衣曲线设计器 v1.3</title>
   <style>
     * { box-sizing: border-box; }
     :root {
@@ -44,11 +44,11 @@
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .field { display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
     .field label { font-size:13px; font-weight:650; color:#374151; }
-    input, textarea {
+    input, textarea, select {
       width:100%; border:1px solid #d1d5db; border-radius:9px; padding:9px 10px; font-size:14px;
       outline:none; background:#fff;
     }
-    input:focus, textarea:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.12); }
+    input:focus, textarea:focus, select:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.12); }
     textarea { min-height:90px; resize:vertical; line-height:1.55; font-family:Consolas, monospace; }
     input[disabled], textarea[disabled] { background:#f3f4f6; color:#9ca3af; }
     .small-box {
@@ -156,11 +156,11 @@
 <div class="app">
   <aside class="panel">
     <div class="title-row">
-      <h1>插肩毛衣曲线设计器 v1.2.1</h1>
+      <h1>插肩毛衣曲线设计器 v1.3</h1>
       <button class="help" id="helpBtn">？ 使用说明</button>
     </div>
     <div class="muted">
-      v1.2.1 修正拖拽初始状态：如果当前规则已经是最密的 <b>每2行+8</b>，拖拽模式会自动从“中间档”开始，给向内、向外都留出调整空间。
+      v1.3 新增“规则拟合”：拖出喜欢的弧度后，程序会自动用尽量少的几段 <b>每 n 行 +8</b> 来逼近它，并始终保证 <b>n ≥ 2</b>。
     </div>
 
     <div class="mode-switch">
@@ -205,6 +205,18 @@
         <code>51-90:2</code>
       </div>
 
+      <div class="field" style="margin-top:12px;">
+        <label>反推规则精度</label>
+        <select id="fitMode">
+          <option value="simple">简洁：最多 2 段（最好照着织）</option>
+          <option value="balanced" selected>平衡：最多 3 段（推荐）</option>
+          <option value="precise">精细：最多 5 段（更贴近弧度）</option>
+        </select>
+        <div class="subtle">
+          段数越少，规则越简单；段数越多，红线越容易贴近你拖出的青色目标曲线。
+        </div>
+      </div>
+
       <details class="advanced">
         <summary>高级数字微调（可选，不看也能用）</summary>
         <div class="subtle" style="margin-top:8px;">
@@ -216,7 +228,7 @@
       </details>
 
       <div class="result-box">
-        <b>反推结果（推荐直接看这个）</b>
+        <b>反推结果（推荐直接看这个）</b><div class="subtle">程序会优先找少量规则段，不再机械列出一长串加针行。</div>
         <div id="dragSummary" style="margin-top:6px;"></div>
         <div class="rules" id="reverseRulesText"></div>
         <div class="subtle" id="reverseRulesNote" style="margin-top:6px;"></div>
@@ -286,16 +298,16 @@
 <div class="modal-bg" id="helpModal" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <div class="modal-head">
-      <h2 id="helpTitle">v1.2.1 使用说明</h2>
+      <h2 id="helpTitle">v1.3 使用说明</h2>
       <button class="close" id="closeHelp">×</button>
     </div>
     <div class="modal-body">
       <div class="callout">
-        <b>v1.2.1 额外修正：</b>如果规则是每2行+8，它本身已经是允许的最大加针频率，因此没有再往外拖的空间。拖拽模式现在会自动从约每4行+8的中间档开始。<br><br>
-        <b>v1.2 的核心变化：</b><br>
-        1）拖拽反推结果不再主要给一长串“第几行加针”；<br>
-        2）而是尽量整理成你们熟悉的规则格式：<code>起始行-结束行:每n行加一次</code>；<br>
-        3）并严格遵守 <b>n ≥ 2</b>，也就是不能连续每一行都加针。
+        <b>v1.3 的核心变化：</b><br>
+        1）拖拽后不再把离散加针点机械地拆成很多小段，而是主动寻找<b>少量、容易照着织的规则段</b>；<br>
+        2）可以选择“简洁 / 平衡 / 精细”三种拟合方式；<br>
+        3）结果仍统一写成 <code>起始行-结束行:每n行加一次</code>，并严格保证 <b>n ≥ 2</b>；<br>
+        4）拖拽起点仍会避开“每2行+8”的最外极限，让内外两个方向都能调整。
       </div>
 
       <h3>一、推荐使用流程</h3>
@@ -304,14 +316,14 @@
         <li>如果你已经知道方案，用 <b>规则输入</b>。</li>
         <li>如果你只想“先看弧度好不好看”，切到 <b>拖拽设计</b>。</li>
         <li>在拖拽设计里，直接拖图中的橙色点，不用先管下面的高级数字。</li>
-        <li>满意后，直接看“反推结果”里的规则即可。</li>
+        <li>满意后，选择“简洁 / 平衡 / 精细”，再直接看“反推结果”里的少量规则段即可。</li>
       </ol>
 
       <h3>二、拖拽设计里最重要的东西是什么？</h3>
       <ul>
         <li><b>橙色点：</b>拖这个，改四条插肩线的弧度。</li>
         <li><b>蓝色点：</b>拖这个，改引返/前后落差示意。</li>
-        <li><b>反推结果：</b>把你拖出来的弧度，自动翻译成“第几行到第几行，每几行加一次”的规则。</li>
+        <li><b>反推结果：</b>把你拖出来的弧度，自动拟合成少量“第几行到第几行，每几行加一次”的规则。</li>
       </ul>
 
       <h3>三、为什么还会有“高级数字微调”？</h3>
@@ -334,7 +346,17 @@
 51-90:2</div>
       <p>表示前 20 行每 4 行加一次，中间每 3 行加一次，后面每 2 行加一次。</p>
 
-      <h3>六、引返示意怎么理解？</h3>
+      <h3>六、简洁 / 平衡 / 精细有什么区别？</h3>
+      <ul>
+        <li><b>简洁：</b>最多 2 段。优先得到最容易记、最容易照着织的方案。</li>
+        <li><b>平衡：</b>最多 3 段。通常已经能保留明显的弧度变化，推荐日常使用。</li>
+        <li><b>精细：</b>最多 5 段。更贴近拖出来的目标弧线，但规则会稍微复杂。</li>
+      </ul>
+      <p>
+        程序并不会为了凑满段数而强行分段：如果一条直线用 1 段就足够，它仍然只会输出 1 段。
+      </p>
+
+      <h3>七、引返示意怎么理解？</h3>
       <p>
         蓝色环状示意表示“前后落差”的作用范围：它从后片开始，沿着两袖和前片两侧延伸，并在前片中间保留一段平段。
         当前版本主要做几何示意，不是逐次转身的精确引返针法图。
@@ -471,16 +493,15 @@
     return h00*ys[k]+h10*h*m[k]+h01*ys[k+1]+h11*h*m[k+1];
   }
 
-  function scheduleFromDrag(totalRows){
+  function rawScheduleFromDrag(totalRows){
     const target=new Array(totalRows+1).fill(0);
     for(let r=0;r<=totalRows;r++){
       target[r] = Math.max(0, interpMonotone(controlRows, controlGroups, r));
-      target[r] = Math.min(target[r], ceilHalf(r)); // 到第 r 行最多也只能有 ceil(r/2) 次加针
+      target[r] = Math.min(target[r], ceilHalf(r));
     }
 
     const groups=new Array(totalRows+1).fill(0), incRows=[];
-    let lastInc = -99999;
-    let maxErr=0;
+    let lastInc=-99999;
     for(let r=1;r<=totalRows;r++){
       groups[r]=groups[r-1];
       const desired=Math.round(target[r]);
@@ -488,12 +509,201 @@
       if(desired>groups[r] && r-lastInc>=2){
         groups[r]++;
         incRows.push(r);
-        lastInc = r;
+        lastInc=r;
+      }
+    }
+
+    let maxErr=0, sumSq=0;
+    for(let r=0;r<=totalRows;r++){
+      const e=target[r]-groups[r];
+      maxErr=Math.max(maxErr,Math.abs(e));
+      sumSq+=e*e;
+    }
+    return {
+      groups,target,incRows,
+      fitError:maxErr,
+      rmse:Math.sqrt(sumSq/(totalRows+1))
+    };
+  }
+
+  function fitModeConfig(){
+    const modeValue = $("fitMode") ? $("fitMode").value : "balanced";
+    if(modeValue==="simple") return {maxSegments:2, penalty:0.85, label:"简洁"};
+    if(modeValue==="precise") return {maxSegments:5, penalty:0.08, label:"精细"};
+    return {maxSegments:3, penalty:0.28, label:"平衡"};
+  }
+
+  function gapSegmentCost(gaps,a,b){
+    let sum=0;
+    for(let i=a;i<=b;i++) sum+=gaps[i];
+    const mean=sum/(b-a+1);
+    const n=Math.max(2,Math.round(mean));
+
+    let sse=0;
+    for(let i=a;i<=b;i++){
+      const d=gaps[i]-n;
+      sse+=d*d;
+    }
+    return {cost:sse,n};
+  }
+
+  function bestGapPartition(gaps,k){
+    const N=gaps.length;
+    const INF=1e100;
+    const dp=Array.from({length:k+1},()=>new Array(N+1).fill(INF));
+    const back=Array.from({length:k+1},()=>new Array(N+1).fill(-1));
+    const chosenN=Array.from({length:k+1},()=>new Array(N+1).fill(2));
+    dp[0][0]=0;
+
+    for(let s=1;s<=k;s++){
+      for(let j=s;j<=N;j++){
+        for(let i=s-1;i<j;i++){
+          if(!Number.isFinite(dp[s-1][i])) continue;
+          const seg=gapSegmentCost(gaps,i,j-1);
+          const val=dp[s-1][i]+seg.cost;
+          if(val<dp[s][j]){
+            dp[s][j]=val;
+            back[s][j]=i;
+            chosenN[s][j]=seg.n;
+          }
+        }
+      }
+    }
+
+    if(!Number.isFinite(dp[k][N])) return null;
+
+    const segments=[];
+    let s=k,j=N;
+    while(s>0){
+      const i=back[s][j];
+      if(i<0) return null;
+      const seg=gapSegmentCost(gaps,i,j-1);
+      segments.push({gapStart:i,gapEnd:j-1,n:seg.n});
+      j=i; s--;
+    }
+    segments.reverse();
+    return {segments,cost:dp[k][N]};
+  }
+
+  function scheduleFromRuleLines(totalRows,ruleLines,target){
+    const rules=ruleLines.map(line=>{
+      const m=line.match(/^(\d+)-(\d+):(\d+)$/);
+      return {start:+m[1],end:+m[2],every:+m[3]};
+    });
+    const base=scheduleFromRules(totalRows,rules);
+    base.target=target.slice();
+
+    let maxErr=0,sumSq=0;
+    for(let r=0;r<=totalRows;r++){
+      const e=(target[r]||0)-(base.groups[r]||0);
+      maxErr=Math.max(maxErr,Math.abs(e));
+      sumSq+=e*e;
+    }
+    base.fitError=maxErr;
+    base.rmse=Math.sqrt(sumSq/(totalRows+1));
+    base.ruleLines=ruleLines.slice();
+    return base;
+  }
+
+  function rulesFromPartition(totalRows,rawIncRows,partition){
+    if(!rawIncRows.length) return [];
+
+    // 只有一次加针时，给一个合法的最简区间。
+    if(rawIncRows.length===1){
+      return [`${rawIncRows[0]}-${totalRows}:2`];
+    }
+
+    const fitted=[rawIncRows[0]];
+    const segments=partition.segments;
+
+    // 按每个分段的固定 n 重建加针位置。
+    for(const seg of segments){
+      for(let gi=seg.gapStart;gi<=seg.gapEnd;gi++){
+        const next=fitted[fitted.length-1]+Math.max(2,seg.n);
+        if(next>totalRows) break;
+        fitted.push(next);
+      }
+    }
+
+    const lines=[];
+    for(let si=0;si<segments.length;si++){
+      const seg=segments[si];
+      const startIncIndex=seg.gapStart;
+
+      // 如果前面因为超过总行数而截断了，停止生成。
+      if(startIncIndex>=fitted.length) break;
+
+      const startRow=fitted[startIncIndex];
+      let endRow=totalRows;
+
+      if(si<segments.length-1){
+        const boundaryIndex=segments[si+1].gapStart;
+        if(boundaryIndex<fitted.length){
+          endRow=Math.max(startRow,fitted[boundaryIndex]-1);
+        }
       }
 
-      maxErr=Math.max(maxErr, Math.abs(target[r]-groups[r]));
+      const n=Math.max(2,seg.n);
+      if(startRow<=totalRows && endRow>=startRow){
+        lines.push(`${startRow}-${endRow}:${n}`);
+      }
     }
-    return {groups,target,incRows,fitError:maxErr};
+
+    // 防止极端情况下没有行。
+    return lines.length ? lines : [`${rawIncRows[0]}-${totalRows}:2`];
+  }
+
+  function scheduleFromDrag(totalRows){
+    const raw=rawScheduleFromDrag(totalRows);
+    const cfg=fitModeConfig();
+
+    if(raw.incRows.length<2){
+      raw.ruleLines = raw.incRows.length ? [`${raw.incRows[0]}-${totalRows}:2`] : [];
+      raw.segmentCount = raw.ruleLines.length;
+      raw.fitModeLabel = cfg.label;
+      return raw;
+    }
+
+    const gaps=[];
+    for(let i=1;i<raw.incRows.length;i++) gaps.push(raw.incRows[i]-raw.incRows[i-1]);
+
+    const maxK=Math.min(cfg.maxSegments,gaps.length);
+    let best=null;
+
+    for(let k=1;k<=maxK;k++){
+      const partition=bestGapPartition(gaps,k);
+      if(!partition) continue;
+
+      const ruleLines=rulesFromPartition(totalRows,raw.incRows,partition);
+      const fitted=scheduleFromRuleLines(totalRows,ruleLines,raw.target);
+
+      // 分段越多越复杂；不同模式使用不同复杂度惩罚。
+      // 再轻微惩罚最终加针次数与目标终点的偏差。
+      const finalTarget=raw.target[totalRows]||0;
+      const finalActual=fitted.groups[totalRows]||0;
+      const score=fitted.rmse + cfg.penalty*Math.max(0,ruleLines.length-1)
+                  + 0.04*Math.abs(finalTarget-finalActual);
+
+      const candidate={
+        ...fitted,
+        score,
+        segmentCount:ruleLines.length,
+        fitModeLabel:cfg.label,
+        rawIncRows:raw.incRows.slice()
+      };
+
+      if(!best || candidate.score<best.score){
+        best=candidate;
+      }
+    }
+
+    if(!best){
+      raw.ruleLines=[];
+      raw.segmentCount=0;
+      raw.fitModeLabel=cfg.label;
+      return raw;
+    }
+    return best;
   }
 
   function maxGroupsForControlRow(row){
@@ -605,70 +815,22 @@
     ].join("");
   }
 
-  function compressIncRowsToRules(incRows){
-    if(!incRows.length) return {lines:["无加针规则"], note:"当前没有产生加针。"};
-
-    const lines=[];
-    const singles=[];
-
-    let start=incRows[0];
-    let prev=incRows[0];
-    let gap = incRows.length>=2 ? incRows[1]-incRows[0] : null;
-
-    function pushSegment(segStart, segEnd, segGap, count){
-      if(count>=2 && segGap!==null){
-        lines.push(`${segStart}-${segEnd}:${segGap}`);
-      }else{
-        singles.push(segStart);
-      }
-    }
-
-    let count=1;
-    for(let i=1;i<incRows.length;i++){
-      const cur=incRows[i];
-      const curGap=cur-prev;
-
-      if(count===1){
-        gap=curGap;
-        count=2;
-        prev=cur;
-        continue;
-      }
-
-      if(curGap===gap){
-        count++;
-        prev=cur;
-      }else{
-        pushSegment(start, prev, gap, count);
-        start=cur;
-        prev=cur;
-        gap=null;
-        count=1;
-      }
-    }
-    pushSegment(start, prev, gap, count);
-
-    let note = "已尽量整理成“起始行-结束行:每n行加一次”的格式，且保证 n ≥ 2。";
-    if(singles.length){
-      note += `\n另外有少量无法再压缩成区间的单独加针行：${singles.map(x=>`第${x}行`).join("、")}。`;
-    }
-
-    const textLines = lines.length ? lines.slice() : [];
-    if(singles.length){
-      singles.forEach(r => textLines.push(`第${r}行：单独加针一次`));
-    }
-    return {lines:textLines.length?textLines:["无加针规则"], note};
-  }
-
   function renderReverseResult(p,schedule){
     if(mode!=="drag") return;
+
     const avg=schedule.incRows.length ? (p.totalRows/schedule.incRows.length).toFixed(2) : "—";
-    const rr = compressIncRowsToRules(schedule.incRows);
-    lastReverseRuleText = rr.lines.join("\n");
-    lastReverseRuleNote = rr.note;
+    const lines=(schedule.ruleLines||[]).slice();
+
+    lastReverseRuleText = lines.length ? lines.join("\n") : "无加针规则";
+    lastReverseRuleNote =
+      lines.length
+        ? `当前使用“${schedule.fitModeLabel||"平衡"}”拟合，共 ${schedule.segmentCount||lines.length} 段。程序优先用少量固定间隔规则逼近目标弧度，并严格保证 n ≥ 2。`
+        : "当前目标曲线没有产生需要执行的加针规则。";
+
     $("dragSummary").innerHTML =
-      `总加针次数：<b>${schedule.incRows.length}</b> 次（每次 +8，共增加 <b>${schedule.incRows.length*8}</b> 针）<br>
-       平均大约：<b>${avg}</b> 行加一次　｜　与目标弧度的最大差异：<b>${schedule.fitError.toFixed(2)}</b> 组`;
+      `拟合规则：<b>${schedule.segmentCount||0}</b> 段　｜　总加针次数：<b>${schedule.incRows.length}</b> 次（共增加 <b>${schedule.incRows.length*8}</b> 针）<br>
+       平均约：<b>${avg}</b> 行加一次　｜　最大曲线差异：<b>${(schedule.fitError||0).toFixed(2)}</b> 组`;
+
     $("reverseRulesText").textContent = lastReverseRuleText;
     $("reverseRulesNote").textContent = lastReverseRuleNote;
     $("dragStartNote").textContent = dragStartNote;
@@ -1047,15 +1209,9 @@
   });
 
   $("applyRulesBtn").addEventListener("click", ()=>{
-    if(!lastReverseRuleText) return;
-    const onlyLines = lastReverseRuleText
-      .split("\n")
-      .filter(line => /^\d+\-\d+\:\d+$/.test(line.trim()))
-      .join("\n");
-    if(onlyLines.trim()){
-      $("rules").value = onlyLines;
-      switchMode("rule");
-    }
+    if(!lastReverseRuleText || lastReverseRuleText==="无加针规则") return;
+    $("rules").value = lastReverseRuleText;
+    switchMode("rule");
   });
 
   $("neutralPreset").addEventListener("click", ()=>{
@@ -1082,7 +1238,7 @@
     $("totalStitches").value=120; $("raglanWidth").value=2; $("stitchGauge").value=24;
     $("rowGauge").value=32; $("totalRows").value=80; $("curveScale").value=1;
     $("neckWidth").value=16; $("neckHeight").value=6; $("rules").value="1-80:2";
-    $("shortRowsExtra").value=6; $("shortRowsWidth").value=.72; $("frontFlatRatio").value=.25; $("frontFlatScale").value=1;
+    $("shortRowsExtra").value=6; $("shortRowsWidth").value=.72; $("frontFlatRatio").value=.25; $("frontFlatScale").value=1; $("fitMode").value="balanced";
     controlRows=[]; controlGroups=[]; dragStartNote=""; mode="rule";
     $("ruleModeBtn").classList.add("active"); $("dragModeBtn").classList.remove("active");
     $("ruleSection").hidden=false; $("dragSection").hidden=true;
@@ -1092,7 +1248,7 @@
 
   [
     "totalStitches","raglanWidth","stitchGauge","rowGauge","curveScale","neckWidth","neckHeight",
-    "shortRowsExtra","shortRowsWidth","frontFlatRatio","frontFlatScale","showPoints","showTarget"
+    "shortRowsExtra","shortRowsWidth","frontFlatRatio","frontFlatScale","showPoints","showTarget","fitMode"
   ].forEach(id => $(id).addEventListener("change", render));
 
   $("totalRows").addEventListener("change", ()=>{
